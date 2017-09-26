@@ -3,35 +3,19 @@
 Run "python3 setup --help-commands" to list all available commands and their
 descriptions.
 """
-import os
-import shutil
-import sys
+import json
 from abc import abstractmethod
 from pathlib import Path
 from subprocess import call, check_call
 
 from setuptools import Command, setup
-from setuptools.command.develop import develop
-from setuptools.command.install import install
 
-if 'bdist_wheel' in sys.argv:
-    raise RuntimeError("This setup.py does not support wheels")
 
-# Paths setup with virtualenv detection
-if 'VIRTUAL_ENV' in os.environ:
-    BASE_ENV = Path(os.environ['VIRTUAL_ENV'])
-else:
-    BASE_ENV = Path('/')
-# Kytos var folder
-VAR_PATH = BASE_ENV / 'var' / 'lib' / 'kytos'
-# Path for enabled NApps
-ENABL_PATH = VAR_PATH / 'napps'
-# Path to install NApps
-INSTL_PATH = VAR_PATH / 'napps' / '.installed'
-CURR_DIR = Path('.').resolve()
-
-# NApps enabled by default
-CORE_NAPPS = ['of_core']
+def read_version_from_json():
+    """Read the NApp version from NApp kytos.json file."""
+    file = Path('kytos.json')
+    metadata = json.loads(file.read_text())
+    return metadata['version']
 
 
 class SimpleCommand(Command):
@@ -75,7 +59,7 @@ class TestCoverage(SimpleCommand):
 
     def run(self):
         """Run unittest quietly and display coverage report."""
-        cmd = 'coverage3 run -m unittest discover -qs napps/kytos' \
+        cmd = 'coverage3 run -m unittest discover -qs src' \
               ' && coverage3 report'
         call(cmd, shell=True)
 
@@ -104,89 +88,22 @@ class CITest(SimpleCommand):
         check_call(cmd, shell=True)
 
 
-class KytosInstall:
-    """Common code for all install types."""
-
-    @staticmethod
-    def enable_core_napps():
-        """Enable a NAPP by creating a symlink."""
-        (ENABL_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
-        for napp in CORE_NAPPS:
-            napp_path = Path('kytos', napp)
-            src = ENABL_PATH / napp_path
-            dst = INSTL_PATH / napp_path
-            src.symlink_to(dst)
-
-
-class InstallMode(install):
-    """Create files in var/lib/kytos."""
-
-    description = 'To install NApps, use kytos-utils. Devs, see "develop".'
-
-    def run(self):
-        """Create of_core as default napps enabled."""
-        print(self.description)
-
-
-class DevelopMode(develop):
-    """Recommended setup for kytos-napps developers.
-
-    Instead of copying the files to the expected directories, a symlink is
-    created on the system aiming the current source code.
-    """
-
-    description = 'install NApps in development mode'
-
-    def run(self):
-        """Install the package in a developer mode."""
-        super().run()
-        if self.uninstall:
-            shutil.rmtree(str(ENABL_PATH), ignore_errors=True)
-        else:
-            self._create_folder_symlinks()
-            self._create_file_symlinks()
-            KytosInstall.enable_core_napps()
-
-    @staticmethod
-    def _create_folder_symlinks():
-        """Symlink to all Kytos NApps folders.
-
-        ./napps/kytos/napp_name will generate a link in
-        var/lib/kytos/napps/.installed/kytos/napp_name.
-        """
-        links = INSTL_PATH / 'kytos'
-        links.mkdir(parents=True, exist_ok=True)
-        code = CURR_DIR / 'napps' / 'kytos'
-        for path in code.iterdir():
-            last_folder = path.parts[-1]
-            if path.is_dir() and last_folder != '__pycache__':
-                src = links / last_folder
-                src.symlink_to(path)
-
-    @staticmethod
-    def _create_file_symlinks():
-        """Symlink to required files."""
-        src = ENABL_PATH / '__init__.py'
-        dst = CURR_DIR / 'napps' / '__init__.py'
-        src.symlink_to(dst)
-
-
-requirements = [i.strip() for i in open("requirements.txt").readlines()]
-
-setup(name='kytos-napps',
-      version='2017.1b3',
+setup(name='kytos/of_core',
+      version=read_version_from_json(),
       description='Core Napps developed by Kytos Team',
-      url='http://github.com/kytos/kytos-napps',
+      url='http://github.com/kytos/of_core',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=requirements,
+      install_requires=[
+          'kytos-utils>=2017.2',
+          'kytos>=2017.2',
+          'python-openflow>=2017.2'
+      ],
       cmdclass={
           'clean': Cleaner,
           'ci': CITest,
           'coverage': TestCoverage,
-          'develop': DevelopMode,
-          'install': InstallMode,
           'lint': Linter,
       },
       zip_safe=False,
