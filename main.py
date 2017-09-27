@@ -12,7 +12,6 @@ import pyof.v0x01.controller2switch.common
 import pyof.v0x01.controller2switch.features_request
 import pyof.v0x01.controller2switch.stats_request
 import pyof.v0x01.symmetric.echo_reply
-from pyof.v0x01.symmetric.hello import Hello as HelloV0x01
 
 import pyof.v0x04.asynchronous.error_msg
 import pyof.v0x04.common.header
@@ -21,13 +20,11 @@ import pyof.v0x04.controller2switch.common
 import pyof.v0x04.controller2switch.features_request
 import pyof.v0x04.symmetric.echo_reply
 from pyof.v0x04.controller2switch.common import MultipartTypes
-from pyof.v0x04.symmetric.hello import Hello as HelloV0x04
 
 from napps.kytos.of_core.v0x01 import utils as of_core_v0x01_utils
 from napps.kytos.of_core.v0x04 import utils as of_core_v0x04_utils
 
 from napps.kytos.of_core import settings
-from napps.kytos.of_core.flow import Flow
 from napps.kytos.of_core.utils import (emit_message_in, emit_message_out,
                                        GenericHello, NegotiationException,
                                        of_slicer)
@@ -78,11 +75,7 @@ class Main(KytosNApp):
         if msg.body_type == \
                 pyof.v0x01.controller2switch.common.StatsTypes.OFPST_FLOW:
             switch = event.source.switch
-            flows = []
-            for flow_stat in msg.body:
-                new_flow = Flow.from_flow_stats(flow_stat)
-                flows.append(new_flow)
-            switch.flows = flows
+            switch.flows = msg.body
 
     @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_features_reply')
     def handle_features_reply(self, event):
@@ -111,12 +104,14 @@ class Main(KytosNApp):
             # self.controller.buffers.app.put(event_raw)
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
-    def handle_port_desc_reply(self, event):
+    def handle_multipart_reply(self, event):
         """Handles Port Description Reply messages."""
         switch = event.source.switch
         reply = event.content['message']
         if reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(switch, reply.body)
+        elif reply.multipart_type == MultipartTypes.OFPMP_FLOW:
+            switch.flows = reply.body
 
     @listen_to('kytos/core.openflow.raw.in')
     def handle_raw_in(self, event):
