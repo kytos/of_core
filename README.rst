@@ -16,7 +16,10 @@ operations. The messages covered are:
 -  send a feature request after echo reply;
 -  update flow list of each switch;
 -  update features;
--  handle all input messages;
+-  handle all input messages.
+
+Besides the operations related to the messages above and OpenFlow handshake,
+this NApp emits basic OpenFlow status events.
 
 ##########
 Installing
@@ -167,6 +170,76 @@ Content
 ********
 Generate
 ********
+
+kytos/of_core.switch.port.created
+=====================================
+Event reporting that a port was created/added in the datapath.
+It is dispatched after parsing a PortStatus sent by a datapath.
+
+Content
+-------
+
+.. code-block:: python
+
+   { 
+     'switch': <switch.id>,   # switch identification
+     'port': <port.port_no>,  # port number
+     'port_description': {<port description>}  # port description dict
+   }
+
+kytos/of_core.switch.port.modified
+=======================================
+Event reporting that a port was modified in the datapath.
+It is dispatched after parsing a PortStatus sent by a datapath.
+
+It is worth to say that the PortStatus message just announces that some Port
+attributes were modified, but it does not state which one. The event dispatched
+will hold all **current** Port attributes. If a NApp needs to know which
+attribute was modified, it will need to compare the current list of attributes
+with the previous one.
+
+Content
+-------
+
+.. code-block:: python
+
+   { 
+     'switch': <switch.id>,   # switch identification
+     'port': <port.port_no>,  # port number
+     'port_description': {<description of the port>}  # port description dict
+   }
+
+kytos/of_core.switch.port.deleted
+=====================================
+Event reporting that a port was deleted from the datapath.
+It is dispatched after parsing a PortStatus sent by a datapath.
+
+Content
+-------
+
+.. code-block:: python
+
+   { 
+     'switch': <switch.id>,      # switch identification
+     'port_no': <port.port_no>,  # port number
+     'port_description': {<description of the port>}  # port description dict
+   }
+
+kytos/of_core.reachable.mac
+===============================
+Event reporting that a mac address is reachable from a specific switch/port.
+This information is retrieved from PacketIns generated sent by the switches.
+
+Content
+-------
+
+.. code-block:: python
+
+    { 
+      'switch': <switch.id>,   # switch identification
+      'port': <port.port_no>,  # port number
+      'reachable_mac': <reachable_mac_address>  # string with mac address
+    }
 
 kytos/of_core.hello_failed
 ==========================
