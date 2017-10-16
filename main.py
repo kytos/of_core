@@ -2,7 +2,9 @@
 from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.connection import ConnectionState
 from kytos.core.helpers import listen_to
+
 from pyof.foundation.exceptions import UnpackException
+from pyof.foundation.network_types import Ethernet
 from pyof.utils import unpack, PYOF_VERSION_LIBS
 
 import pyof.v0x01.asynchronous.error_msg
@@ -193,6 +195,10 @@ class Main(KytosNApp):
         and the source."""
         if connection.is_alive():
             emit_message_in(self.controller, connection, message)
+            if message.header.message_type.name.lower() == 'ofpt_port_status':
+                self.update_port_status(message, connection)
+            elif message.header.message_type.name.lower() == 'ofpt_packet_in':
+                self.update_links(message, connection)
 
     def emit_message_out(self, connection, message):
         """Emit a KytosEvent for an outgoing message containing the message
@@ -323,3 +329,65 @@ class Main(KytosNApp):
     def shutdown(self):
         """End of the application."""
         log.debug('Shutting down...')
+
+    @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_packet_in')
+    def update_links(self, message, source):
+        """Dispatch 'reacheable.mac' event.
+
+        Args:
+            message: python openflow (pyof) PacketIn object.
+            source: kytos.core.switch.Connection instance.
+
+        Dispatch:
+            `reachable.mac`:
+                {
+                  switch : <switch.id>,
+                  port: <port.port_no>
+                  reachable_mac: <mac_address>
+                }
+
+        """
+        ethernet = Ethernet()
+        ethernet.unpack(message.data.value)
+
+        name = 'kytos/of_topology.reachable.mac'
+        content = {'switch': source.switch.id,
+                   'port': message.in_port,
+                   'reachable_mac': ethernet.source}
+        event = KytosEvent(name, content)
+        self.controller.buffers.app.put(event)
+
+        msg = 'The MAC %s is reachable from switch/port %s/%s.'
+        log.debug(msg, ethernet.source, source.switch.id,
+                  message.in_port)
+
+    @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_port_status')
+    def update_port_status(self, port_status, source):
+        """Dispatch 'port.[created|modified|deleted]' event.
+
+        Args:
+            port_status: python openflow (pyof) PortStatus object.
+            source: kytos.core.switch.Connection instance.
+
+        Dispatch:
+            `kytos/of_topology.switch.port.[created|modified|deleted]`:
+                {
+                  switch : <switch.id>,
+                  port: <port.port_no>
+                  port_description: {<description of the port>}
+                }
+
+        """
+        reason = port_status.reason.value
+
+        name = 'kytos/of_topology.switch.port.' + reason.lower()
+        content = {'switch': source.id,
+                   'port': port_status.desc.port_no,
+                   'port_description': vars(port_status.desc)}
+
+        event = KytosEvent(name=name, content=content)
+        self.controller.buffers.app.put(event)
+
+        msg = 'The port %s (%s) from switch %s was %s.'
+        log.debug(msg, port_status.desc.port_no, source.id, reason)
+
