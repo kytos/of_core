@@ -330,7 +330,6 @@ class Main(KytosNApp):
         """End of the application."""
         log.debug('Shutting down...')
 
-    @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_packet_in')
     def update_links(self, message, source):
         """Dispatch 'reacheable.mac' event.
 
@@ -350,7 +349,7 @@ class Main(KytosNApp):
         ethernet = Ethernet()
         ethernet.unpack(message.data.value)
 
-        name = 'kytos/of_topology.reachable.mac'
+        name = 'kytos/of_core.reachable.mac'
         content = {'switch': source.switch.id,
                    'port': message.in_port,
                    'reachable_mac': ethernet.source}
@@ -361,7 +360,6 @@ class Main(KytosNApp):
         log.debug(msg, ethernet.source, source.switch.id,
                   message.in_port)
 
-    @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_port_status')
     def update_port_status(self, port_status, source):
         """Dispatch 'port.[created|modified|deleted]' event.
 
@@ -370,7 +368,7 @@ class Main(KytosNApp):
             source: kytos.core.switch.Connection instance.
 
         Dispatch:
-            `kytos/of_topology.switch.port.[created|modified|deleted]`:
+            `kytos/of_core.switch.port.[created|modified|deleted]`:
                 {
                   switch : <switch.id>,
                   port: <port.port_no>
@@ -380,7 +378,7 @@ class Main(KytosNApp):
         """
         reason = port_status.reason.value
 
-        name = 'kytos/of_topology.switch.port.' + reason.lower()
+        name = 'kytos/of_core.switch.port.' + reason.lower()
         content = {'switch': source.id,
                    'port': port_status.desc.port_no,
                    'port_description': vars(port_status.desc)}
