@@ -351,8 +351,8 @@ class Main(KytosNApp):
 
         name = 'kytos/of_core.reachable.mac'
         content = {'switch': source.switch.id,
-                   'port': message.in_port,
-                   'reachable_mac': ethernet.source}
+                   'port': message.in_port.value,
+                   'reachable_mac': ethernet.source.value}
         event = KytosEvent(name, content)
         self.controller.buffers.app.put(event)
 
