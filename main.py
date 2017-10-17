@@ -376,7 +376,7 @@ class Main(KytosNApp):
                 }
 
         """
-        reason = port_status.reason.value
+        reason = port_status.reason.enum_ref(port_status.reason.value).name
 
         name = 'kytos/of_core.switch.port.' + reason.lower()
         content = {'switch': source.id,
@@ -388,4 +388,3 @@ class Main(KytosNApp):
 
         msg = 'The port %s (%s) from switch %s was %s.'
         log.debug(msg, port_status.desc.port_no, source.id, reason)
-
