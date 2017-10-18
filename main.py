@@ -381,11 +381,13 @@ class Main(KytosNApp):
 
         """
         reason = port_status.reason.enum_ref(port_status.reason.value).name
+        if reason not in ['DELETED', 'MODIFIED']:
+            return
 
-        name = 'kytos/of_core.switch.port.' + reason.lower()
-        content = {'switch': source.id,
-                   'port': port_status.desc.port_no,
-                   'port_description': vars(port_status.desc)}
+        interface = source.get_interface_by_port_no(port_status.desc.port_no)
+
+        name = 'kytos/of_core.switch.interface.' + reason.lower()
+        content = {'interface': interface}
 
         event = KytosEvent(name=name, content=content)
         self.controller.buffers.app.put(event)
