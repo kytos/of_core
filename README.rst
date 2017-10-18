@@ -171,23 +171,7 @@ Content
 Generate
 ********
 
-kytos/of_core.switch.port.created
-=====================================
-Event reporting that a port was created/added in the datapath.
-It is dispatched after parsing a PortStatus sent by a datapath.
-
-Content
--------
-
-.. code-block:: python
-
-   { 
-     'switch': <switch.id>,   # switch identification
-     'port': <port.port_no>,  # port number
-     'port_description': {<port description>}  # port description dict
-   }
-
-kytos/of_core.switch.port.modified
+kytos/of_core.switch.interface.modified
 =======================================
 Event reporting that a port was modified in the datapath.
 It is dispatched after parsing a PortStatus sent by a datapath.
@@ -203,13 +187,11 @@ Content
 
 .. code-block:: python
 
-   { 
-     'switch': <switch.id>,   # switch identification
-     'port': <port.port_no>,  # port number
-     'port_description': {<description of the port>}  # port description dict
+   {
+    'interface': <interface> # Instance of Interface class
    }
 
-kytos/of_core.switch.port.deleted
+kytos/of_core.switch.interface.deleted
 =====================================
 Event reporting that a port was deleted from the datapath.
 It is dispatched after parsing a PortStatus sent by a datapath.
@@ -219,10 +201,8 @@ Content
 
 .. code-block:: python
 
-   { 
-     'switch': <switch.id>,      # switch identification
-     'port_no': <port.port_no>,  # port number
-     'port_description': {<description of the port>}  # port description dict
+   {
+    'interface': <interface> # Instance of Interface class
    }
 
 kytos/of_core.reachable.mac
