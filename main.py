@@ -4,7 +4,7 @@ from kytos.core.connection import ConnectionState
 from kytos.core.helpers import listen_to
 
 from pyof.foundation.exceptions import UnpackException
-from pyof.foundation.network_types import Ethernet
+from pyof.foundation.network_types import Ethernet, EtherType
 from pyof.utils import unpack, PYOF_VERSION_LIBS
 
 import pyof.v0x01.asynchronous.error_msg
@@ -21,6 +21,7 @@ import pyof.v0x04.common.utils
 import pyof.v0x04.controller2switch.common
 import pyof.v0x04.controller2switch.features_request
 import pyof.v0x04.symmetric.echo_reply
+
 from pyof.v0x04.controller2switch.common import MultipartTypes
 
 from napps.kytos.of_core.v0x01 import utils as of_core_v0x01_utils
@@ -348,10 +349,13 @@ class Main(KytosNApp):
         """
         ethernet = Ethernet()
         ethernet.unpack(message.data.value)
+        if ethernet.ether_type in (EtherType.LLDP, EtherType.IPV6):
+            return
 
+        port = source.switch.get_interface_by_port_no(message.in_port.value)
         name = 'kytos/of_core.reachable.mac'
-        content = {'switch': source.switch.id,
-                   'port': message.in_port.value,
+        content = {'switch': source.switch,
+                   'port': port,
                    'reachable_mac': ethernet.source.value}
         event = KytosEvent(name, content)
         self.controller.buffers.app.put(event)
