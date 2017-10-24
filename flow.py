@@ -102,3 +102,11 @@ class Match:
 
     def as_dict(self):
         return self.__dict__
+
+    @classmethod
+    def from_dict(cls, dict_content):
+        match = cls()
+        for key, value in dict_content.items():
+            if key in match.__dict__:
+                setattr(match, key, value)
+        return match

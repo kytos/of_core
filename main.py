@@ -32,6 +32,7 @@ from napps.kytos.of_core.utils import (emit_message_in, emit_message_out,
                                        GenericHello, NegotiationException,
                                        of_slicer)
 
+from napps.kytos.of_core.v0x01.flow import Flow as Flow10
 
 class Main(KytosNApp):
     """Main class of the NApp responsible for OpenFlow basic operations."""
@@ -74,11 +75,16 @@ class Main(KytosNApp):
             event (:class:`~kytos.core.events.KytosEvent):
                 Event with ofpt_stats_reply in message.
         """
+        output = "\n***** STATS REPLY *****\n"
+        output += " --> {}\n".format(event.source.switch.id)
         msg = event.content['message']
         if msg.body_type == \
                 pyof.v0x01.controller2switch.common.StatsTypes.OFPST_FLOW:
             switch = event.source.switch
-            switch.flows = msg.body
+            switch.flows = [ Flow10.from_of_flow_stats(f, switch)
+                             for f in msg.body ]
+            output += " --> Number of Flows: {}\n".format(len(msg.body))
+            #log.info(output)
 
     @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_features_reply')
     def handle_features_reply(self, event):
