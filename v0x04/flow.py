@@ -2,6 +2,7 @@
 # TODO: Enable missing docstring warning after development
 # pylint: disable=C0111
 import hashlib
+from abc import ABC, abstractmethod
 
 from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
@@ -9,6 +10,7 @@ from napps.kytos.of_core.flow import Match as MatchBase
 from pyof.v0x04.common.action import ActionOutput as OFActionOutput
 from pyof.v0x04.common.action import ActionSetField as OFActionSetField
 from pyof.v0x04.common.flow_match import OxmTLV, OxmOfbMatchField, VlanId
+from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
 
 class Flow(FlowBase):
@@ -71,8 +73,20 @@ class Flow(FlowBase):
 
         return flow
 
+    def as_flow_mod(self):
+        flow_mod = FlowMod()
+        # Special cases will be reassigned after this loop
+        for attr_name, attr_value in self.__dict__.items():
+            if attr_value is not None:
+                setattr(flow_mod, attr_name, attr_value)
 
-class Action:
+        flow_mod.actions = [Action.as_of_action(a) for a in self.actions]
+        flow_mod.match = self.match.as_of_match()
+
+        return flow_mod
+
+
+class Action(ABC):
     """FlowAction represents a action to be executed once a flow is actived."""
 
     @staticmethod
@@ -94,8 +108,12 @@ class Action:
         elif isinstance(action, OFActionSetField):
             return ActionSetVlan.from_of_action(action)
 
+    @abstractmethod
+    def as_of_action(self):
+        pass
 
-class ActionSetVlan:
+
+class ActionSetVlan(Action):
     def __init__(self, vlan_id):
         self.vlan_id = vlan_id
         self.action_type = 'set_vlan'
@@ -107,7 +125,7 @@ class ActionSetVlan:
     def from_dict(cls, dict_content):
         return cls(vlan_id=dict_content['vlan_id'])
 
-    def as_of_action_set_field(self):
+    def as_of_action(self):
         tlv = OxmTLV()
         tlv.oxm_field = OxmOfbMatchField.OFPXMT_OFB_VLAN_VID
         oxm_value = self.vlan_id | VlanId.OFPVID_PRESENT
@@ -115,7 +133,7 @@ class ActionSetVlan:
         return OFActionSetField(field=tlv)
 
 
-class ActionOutput:
+class ActionOutput(Action):
     def __init__(self, port=None):
         self.action_type = 'output'
         self.port = port
@@ -126,6 +144,9 @@ class ActionOutput:
     @classmethod
     def from_dict(cls, dict_content):
         return cls(port=dict_content['port'])
+
+    def as_of_action(self):
+        return OFActionOutput(port=self.port)
 
 
 class Match(MatchBase):
