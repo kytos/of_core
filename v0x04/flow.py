@@ -10,7 +10,7 @@ from pyof.v0x04.common.flow_match import (OxmMatchFields, OxmTLV,
                                           OxmOfbMatchField, VlanId)
 from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
-from napps.kytos.of_core.flow import Flow
+from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
 from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 
@@ -100,4 +100,11 @@ class Match(MatchBase):
         return OFMatch(oxm_match_fields=oxm_fields)
 
 
-Flow.set_versioned_classes(Action, FlowMod, Match)
+class Flow(FlowBase):
+    """Behaves the same as 1.0's flow from end-user perspective.
+
+    This subclass only defines version-specific classes"""
+
+    _action_class = Action
+    _flow_mod_class = FlowMod
+    _match_class = Match

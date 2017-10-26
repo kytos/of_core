@@ -17,6 +17,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     actions that should occur in case any match happen.
     """
 
+    # Subclasses must set their version-specific classes
     _action_class = None
     _flow_mod_class = None
     _match_class = None
@@ -45,12 +46,6 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         self.cookie = cookie
         self.actions = actions or []
         self.stats = {}
-
-    @classmethod
-    def set_versioned_classes(cls, action, flow_mod, match):
-        cls._action_class = action
-        cls._flow_mod_class = flow_mod
-        cls._match_class = match
 
     @property
     def id(self):  # pylint: disable=invalid-name

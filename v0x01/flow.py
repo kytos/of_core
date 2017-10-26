@@ -1,7 +1,7 @@
 """Module with main classes related to Flows."""
 # pylint: disable=missing-docstring
 
-from napps.kytos.of_core.flow import Flow as Flow
+from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
 
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
@@ -139,4 +139,11 @@ class ActionSetVlan(Action):
         return OFActionVlanVid(vlan_id=self.vlan_id)
 
 
-Flow.set_versioned_classes(Action, FlowMod, Match)
+class Flow(FlowBase):
+    """Behaves the same as 1.0's flow from end-user perspective.
+
+    This subclass only defines version-specific classes"""
+
+    _action_class = Action
+    _flow_mod_class = FlowMod
+    _match_class = Match
