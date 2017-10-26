@@ -97,6 +97,8 @@ class Main(KytosNApp):
                 connection.protocol.state == 'waiting_features_reply'):
             connection.protocol.state = 'handshake_complete'
             connection.set_established_state()
+            version_string = '0x0' + str(connection.protocol.version)
+            connection.switch.ofp_version = version_string
             if settings.SEND_SET_CONFIG:
                 version_utils.send_set_config(self.controller, switch)
             log.info('Connection %s, Switch %s: OPENFLOW HANDSHAKE COMPLETE',
