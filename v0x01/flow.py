@@ -1,7 +1,8 @@
 """Module with main classes related to Flows."""
+# TODO Enable missing docstring warning after development
+# pylint: disable=C0111
 
 import hashlib
-import json
 
 from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
@@ -11,7 +12,6 @@ from pyof.v0x01.common.flow_match import Match as OFMatch
 from pyof.v0x01.common.action import ActionOutput as OFActionOutput
 from pyof.v0x01.common.action import ActionVlanVid as OFActionVlanVid
 
-from kytos.core import log
 
 class Flow(FlowBase):
     """Class to abstract a Flow to OF 1.0 switches.
@@ -20,6 +20,7 @@ class Flow(FlowBase):
     switch. A flow, in this case is represented by a Match object and a set of
     actions that should occur in case any match happen.
     """
+
     def __init__(self, *args, match=None, actions=None, **kwargs):
         kwargs['match'] = match or Match()
         super().__init__(*args, **kwargs)
@@ -36,7 +37,7 @@ class Flow(FlowBase):
             string: Hash of object.
 
         """
-        actions = [ action.as_dict() for action in self.actions ]
+        actions = [action.as_dict() for action in self.actions]
         match = self.match.as_dict()
 
         fields = [self.switch.id, self.table_id, match, self.priority,
@@ -50,7 +51,7 @@ class Flow(FlowBase):
 
     def as_dict(self):
         flow = super().as_dict()
-        flow["actions"] = [ action.as_dict() for action in self.actions ]
+        flow["actions"] = [action.as_dict() for action in self.actions]
         return flow
 
     def as_add_flow_mod(self):
@@ -72,7 +73,7 @@ class Flow(FlowBase):
 
     @classmethod
     def from_of_flow_stats(cls, flow_stats, switch):
-        actions = [ Action.from_of_action(a) for a in flow_stats.actions ]
+        actions = [Action.from_of_action(a) for a in flow_stats.actions]
         flow = cls(switch=switch,
                    table_id=flow_stats.table_id.value,
                    match=Match.from_of_match(flow_stats.match),
@@ -86,7 +87,7 @@ class Flow(FlowBase):
     @classmethod
     def from_dict(cls, dict_content, switch):
         flow = cls(switch=switch)
-        
+
         for key, value in dict_content.items():
             if key in flow.__dict__:
                 setattr(flow, key, value)
@@ -102,20 +103,21 @@ class Flow(FlowBase):
 
         return flow
 
+
 class Match(MatchBase):
     @classmethod
-    def from_of_match(cls, match):
-        match = cls(in_port=match.in_port.value,
-                    dl_src=match.dl_src.value,
-                    dl_dst=match.dl_dst.value,
-                    dl_vlan=match.dl_vlan.value,
-                    dl_vlan_pcp=match.dl_vlan_pcp.value,
-                    dl_type=match.dl_type.value,
-                    nw_proto=match.nw_proto.value,
-                    nw_src=match.nw_src.value,
-                    nw_dst=match.nw_dst.value,
-                    tp_src=match.tp_src.value,
-                    tp_dst=match.tp_dst.value)
+    def from_of_match(cls, of_match):
+        match = cls(in_port=of_match.in_port.value,
+                    dl_src=of_match.dl_src.value,
+                    dl_dst=of_match.dl_dst.value,
+                    dl_vlan=of_match.dl_vlan.value,
+                    dl_vlan_pcp=of_match.dl_vlan_pcp.value,
+                    dl_type=of_match.dl_type.value,
+                    nw_proto=of_match.nw_proto.value,
+                    nw_src=of_match.nw_src.value,
+                    nw_dst=of_match.nw_dst.value,
+                    tp_src=of_match.tp_src.value,
+                    tp_dst=of_match.tp_dst.value)
         return match
 
     def as_of_match(self):
@@ -142,11 +144,11 @@ class Action:
             return ActionSetVlan.from_dict(dict_content)
 
     @classmethod
-    def from_of_action(cls, action):
-        if isinstance(action, OFActionOutput):
-            return ActionOutput.from_of_action(action)
-        elif isinstance(action, OFActionVlanVid):
-            return ActionSetVlan.from_of_action(action)
+    def from_of_action(cls, of_action):
+        if isinstance(of_action, OFActionOutput):
+            return ActionOutput.from_of_action(of_action)
+        elif isinstance(of_action, OFActionVlanVid):
+            return ActionSetVlan.from_of_action(of_action)
 
 
 class ActionOutput(Action):
@@ -184,8 +186,8 @@ class ActionOutput(Action):
         return cls(port=dict_content['port'])
 
     @classmethod
-    def from_of_action(cls, action_output):
-        return ActionOutput(port=action_output.port.value)
+    def from_of_action(cls, of_action):
+        return ActionOutput(port=of_action.port.value)
 
     def as_of_action(self):
         return OFActionOutput(port=self.port)
@@ -224,8 +226,8 @@ class ActionSetVlan(Action):
         return cls(vlan_id=dict_content['vlan_id'])
 
     @classmethod
-    def from_of_action(cls, action):
-        return cls(vlan_id=action.vlan_id.value)
+    def from_of_action(cls, of_action):
+        return cls(vlan_id=of_action.vlan_id.value)
 
     def as_of_action(self):
         return OFActionVlanVid(vlan_id=self.vlan_id)
