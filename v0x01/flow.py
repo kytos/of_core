@@ -1,107 +1,13 @@
 """Module with main classes related to Flows."""
-# TODO Enable missing docstring warning after development
-# pylint: disable=C0111
+# pylint: disable=missing-docstring
 
-import hashlib
-
-from napps.kytos.of_core.flow import Flow as FlowBase
+from napps.kytos.of_core.flow import Flow as Flow
 from napps.kytos.of_core.flow import Match as MatchBase
 
-from pyof.v0x01.controller2switch.flow_mod import FlowMod, FlowModCommand
+from pyof.v0x01.controller2switch.flow_mod import FlowMod
 from pyof.v0x01.common.flow_match import Match as OFMatch
 from pyof.v0x01.common.action import ActionOutput as OFActionOutput
 from pyof.v0x01.common.action import ActionVlanVid as OFActionVlanVid
-
-
-class Flow(FlowBase):
-    """Class to abstract a Flow to OF 1.0 switches.
-
-    This class represents a Flow installed or to be installed inside the
-    switch. A flow, in this case is represented by a Match object and a set of
-    actions that should occur in case any match happen.
-    """
-
-    def __init__(self, *args, match=None, actions=None, **kwargs):
-        kwargs['match'] = match or Match()
-        super().__init__(*args, **kwargs)
-        self.actions = actions or []
-
-    @property
-    def id(self):  # pylint: disable=invalid-name
-        """Return the hash of the object.
-
-        Calculates the hash of the object by using the hashlib we use md5 of
-        strings.
-
-        Returns:
-            string: Hash of object.
-
-        """
-        actions = [action.as_dict() for action in self.actions]
-        match = self.match.as_dict()
-
-        fields = [self.switch.id, self.table_id, match, self.priority,
-                  self.idle_timeout, self.hard_timeout, self.cookie, actions]
-
-        hash_result = hashlib.md5()
-        for field in fields:
-            hash_result.update(str(field).encode('utf-8'))
-
-        return hash_result.hexdigest()
-
-    def as_dict(self):
-        flow = super().as_dict()
-        flow["actions"] = [action.as_dict() for action in self.actions]
-        return flow
-
-    def as_add_flow_mod(self):
-        return self.as_flow_mod(FlowModCommand.OFPFC_ADD)
-
-    def as_delete_flow_mod(self):
-        return self.as_flow_mod(FlowModCommand.OFPFC_DELETE)
-
-    def as_flow_mod(self, command):
-        actions = [action.as_of_action() for action in self.actions]
-        flow_mod = FlowMod(match=self.match.as_of_match(),
-                           cookie=self.cookie,
-                           command=command,
-                           idle_timeout=self.idle_timeout,
-                           hard_timeout=self.hard_timeout,
-                           priority=self.priority,
-                           actions=actions)
-        return flow_mod
-
-    @classmethod
-    def from_of_flow_stats(cls, flow_stats, switch):
-        actions = [Action.from_of_action(a) for a in flow_stats.actions]
-        flow = cls(switch=switch,
-                   table_id=flow_stats.table_id.value,
-                   match=Match.from_of_match(flow_stats.match),
-                   priority=flow_stats.priority.value,
-                   idle_timeout=flow_stats.idle_timeout.value,
-                   hard_timeout=flow_stats.hard_timeout.value,
-                   cookie=flow_stats.cookie.value,
-                   actions=actions)
-        return flow
-
-    @classmethod
-    def from_dict(cls, dict_content, switch):
-        flow = cls(switch=switch)
-
-        for key, value in dict_content.items():
-            if key in flow.__dict__:
-                setattr(flow, key, value)
-
-        if 'match' in dict_content:
-            flow.match = Match.from_dict(dict_content['match'])
-
-        flow.actions = []
-        if 'actions' in dict_content:
-            for action_dict in dict_content['actions']:
-                action = Action.from_dict(action_dict)
-                flow.actions.append(action)
-
-        return flow
 
 
 class Match(MatchBase):
@@ -231,3 +137,6 @@ class ActionSetVlan(Action):
 
     def as_of_action(self):
         return OFActionVlanVid(vlan_id=self.vlan_id)
+
+
+Flow.set_versioned_classes(Action, FlowMod, Match)

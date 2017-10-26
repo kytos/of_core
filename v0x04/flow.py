@@ -1,6 +1,6 @@
 """Module with main classes related to Flows."""
-# TODO Enable missing docstring warning after development
-# pylint: disable=C0111
+# pylint: disable=missing-docstring
+
 from abc import ABC, abstractmethod
 
 from pyof.v0x04.common.action import ActionOutput as OFActionOutput

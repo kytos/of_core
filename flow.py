@@ -1,6 +1,5 @@
 """Module with main classes related to Flows."""
-# TODO Enable missing docstring warning after development
-# pylint: disable=C0111
+# pylint: disable=missing-docstring
 
 import json
 from abc import ABC, abstractmethod
@@ -22,7 +21,6 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     _flow_mod_class = None
     _match_class = None
 
-    # pylint: disable=too-many-arguments,too-many-locals
     def __init__(self, switch, table_id=0xff, match=None, priority=0,
                  idle_timeout=0, hard_timeout=0, cookie=0, actions=None):
         """Assign parameters to attributes.
@@ -36,9 +34,11 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
             cookie (int): Opaque controller-issued identifier.
             actions (|list_of_actions|): List of action to apply.
         """
+        # pylint: disable=too-many-arguments,too-many-locals
         self.switch = switch
         self.table_id = table_id
-        self.match = match or self._match_class()
+        # Disable not-callable error as subclasses set a class
+        self.match = match or self._match_class()  # pylint: disable=E1102
         self.priority = priority
         self.idle_timeout = idle_timeout
         self.hard_timeout = hard_timeout
@@ -120,7 +120,8 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         return self._as_flow_mod(FlowModCommand.OFPFC_DELETE)
 
     def _as_flow_mod(self, command):
-        flow_mod = self._flow_mod_class()
+        # Disable not-callable error as subclasses set a class
+        flow_mod = self._flow_mod_class()  # pylint: disable=E1102
         flow_mod.match = self.match.as_of_match()
         flow_mod.cookie = self.cookie
         flow_mod.command = command
