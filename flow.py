@@ -62,7 +62,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         Returns:
             str: Flow unique identifier (md5sum).
         """
-        json_str = self.as_json(include_id=False)
+        json_str = self.as_json(sort_keys=True, include_id=False)
         md5sum = md5()
         md5sum.update(json_str.encode('utf-8'))
         return md5sum.hexdigest()
@@ -104,14 +104,17 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
         return flow
 
-    def as_json(self, include_id=True):
+    def as_json(self, sort_keys=False, include_id=True):
         """Return the representation of a flow in a json format.
+
+        By default, Python doesn't sort keys. To properly calculate the ID,
+        sorting keys is required.
 
         Returns:
             string: Json string using flow attributes.
 
         """
-        return json.dumps(self.as_dict(include_id))
+        return json.dumps(self.as_dict(include_id), sort_keys=sort_keys)
 
     def as_add_flow_mod(self):
         return self._as_flow_mod(FlowModCommand.OFPFC_ADD)
