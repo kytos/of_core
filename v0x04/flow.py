@@ -81,9 +81,6 @@ class ActionOutput(Action):
 class Match(MatchBase):
     """Aggregate MatchFields preserving the behavior of Flow 1.0."""
 
-    def as_dict(self):
-        return {k: v for k, v in super().as_dict().items() if v is not None}
-
     @classmethod
     def from_of_match(cls, of_match):
         match = cls()

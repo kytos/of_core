@@ -163,7 +163,7 @@ class Match:  # pylint: disable=too-many-instance-attributes
         self.tp_dst = tp_dst
 
     def as_dict(self):
-        return self.__dict__
+        return {k: v for k, v in self.__dict__.items() if v is not None}
 
     @classmethod
     def from_dict(cls, dict_content):
