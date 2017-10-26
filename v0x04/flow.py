@@ -18,6 +18,9 @@ from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 class Action(ABC):
     """FlowAction represents a action to be executed once a flow is actived."""
 
+    def as_dict(self):
+        return self.__dict__
+
     @staticmethod
     def from_dict(dict_content):
         """Build one of the Actions from a dictionary.
@@ -43,12 +46,10 @@ class Action(ABC):
 
 
 class ActionSetVlan(Action):
+
     def __init__(self, vlan_id):
         self.vlan_id = vlan_id
         self.action_type = 'set_vlan'
-
-    def as_dict(self):
-        return self.__dict__
 
     @classmethod
     def from_dict(cls, dict_content):
@@ -66,9 +67,6 @@ class ActionOutput(Action):
     def __init__(self, port=None):
         self.action_type = 'output'
         self.port = port
-
-    def as_dict(self):
-        return self.__dict__
 
     @classmethod
     def from_dict(cls, dict_content):
