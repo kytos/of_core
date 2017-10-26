@@ -1,12 +1,12 @@
 """Module with main classes related to Flows."""
+# TODO Enable missing docstring warning after development
+# pylint: disable=C0111
 
-import hashlib
 import json
-
 from abc import ABC, abstractmethod
 
 
-class Flow(ABC):
+class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     """Class to abstract a Flow to switches.
 
     This class represents a Flow installed or to be installed inside the
@@ -35,6 +35,7 @@ class Flow(ABC):
         self.idle_timeout = idle_timeout
         self.hard_timeout = hard_timeout
         self.cookie = cookie
+        self.actions = actions or []
         self.stats = {}
 
     @property
@@ -83,10 +84,11 @@ class Flow(ABC):
         pass
 
 
-class Match:
+class Match:  # pylint: disable=too-many-instance-attributes
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
                  dl_vlan_pcp=None, dl_type=None, nw_tos=None, nw_proto=None,
                  nw_src=None, nw_dst=None, tp_src=None, tp_dst=None):
+        # pylint: disable=too-many-arguments
         self.in_port = in_port
         self.dl_src = dl_src
         self.dl_dst = dl_dst
