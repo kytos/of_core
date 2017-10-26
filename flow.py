@@ -4,6 +4,10 @@
 
 import json
 from abc import ABC, abstractmethod
+from hashlib import md5
+
+# Note: FlowModCommand is the same in both v0x01 and v0x04
+from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
 
 class Flow(ABC):  # pylint: disable=too-many-instance-attributes
@@ -14,6 +18,10 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     actions that should occur in case any match happen.
     """
 
+    _action_class = None
+    _flow_mod_class = None
+    _match_class = None
+
     # pylint: disable=too-many-arguments,too-many-locals
     def __init__(self, switch, table_id=0xff, match=None, priority=0,
                  idle_timeout=0, hard_timeout=0, cookie=0, actions=None):
@@ -21,7 +29,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
         Args:
             table_id (int): The index of a single table or 0xff for all tables.
-            match (|match|): Match object..
+            match (|match|): Match object.
             priority (int): Priority level of flow entry.
             idle_timeout (int): Idle time before discarding in seconds.
             hard_timeout (int): Max time before discarding in seconds.
@@ -30,7 +38,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         """
         self.switch = switch
         self.table_id = table_id
-        self.match = match
+        self.match = match or self._match_class()
         self.priority = priority
         self.idle_timeout = idle_timeout
         self.hard_timeout = hard_timeout
@@ -38,50 +46,103 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         self.actions = actions or []
         self.stats = {}
 
+    @classmethod
+    def set_versioned_classes(cls, action, flow_mod, match):
+        cls._action_class = action
+        cls._flow_mod_class = flow_mod
+        cls._match_class = match
+
     @property
-    @abstractmethod
     def id(self):  # pylint: disable=invalid-name
-        """Return the hash of the object.
+        """Return the flow unique identifier.
 
-        Calculates the hash of the object by using the hashlib we use md5 of
-        strings.
-
-        You MUST implement this method in your child class.
+        Calculates the hash of the object by using Python's md5 on the json
+        without statistics.
 
         Returns:
-            string: Hash of object.
-
+            str: Flow unique identifier (md5sum).
         """
-        pass
+        json_str = self.as_json(include_id=False)
+        md5sum = md5()
+        md5sum.update(json_str.encode('utf-8'))
+        return md5sum.hexdigest()
 
-    def as_dict(self):
+    def as_dict(self, include_id=True):
         """Return the representation of a flow as a python dictionary.
 
         Returns:
             dict: Dictionary using flow attributes.
 
         """
-        match = self.match.as_dict() if self.match else None
+        flow_dict = {'table_id': self.table_id,
+                     'match': self.match.as_dict(),
+                     'priority': self.priority,
+                     'idle_timeout': self.idle_timeout,
+                     'hard_timeout': self.hard_timeout,
+                     'cookie': self.cookie,
+                     'actions': [action.as_dict() for action in self.actions]}
+        if include_id:
+            flow_dict['id'] = self.id
+        return flow_dict
 
-        return {"id": self.id,
-                "table_id": self.table_id,
-                "match": match,
-                "priority": self.priority,
-                "idle_timeout": self.idle_timeout,
-                "hard_timeout": self.hard_timeout,
-                "cookie": self.cookie}
+    @classmethod
+    def from_dict(cls, flow_dict, switch):
+        flow = cls(switch)
 
-    def as_json(self):
+        for attr_name, attr_value in flow_dict.items():
+            if attr_name in flow.__dict__:
+                setattr(flow, attr_name, attr_value)
+
+        if 'match' in flow_dict:
+            flow.match = cls._match_class.from_dict(flow_dict['match'])
+
+        flow.actions = []
+        if 'actions' in flow_dict:
+            for action_dict in flow_dict['actions']:
+                action = cls._action_class.from_dict(action_dict)
+                flow.actions.append(action)
+
+        return flow
+
+    def as_json(self, include_id=True):
         """Return the representation of a flow in a json format.
 
         Returns:
             string: Json string using flow attributes.
 
         """
-        return json.dumps(self.as_dict())
+        return json.dumps(self.as_dict(include_id))
 
-    def as_flow_mod(self):
-        pass
+    def as_add_flow_mod(self):
+        return self._as_flow_mod(FlowModCommand.OFPFC_ADD)
+
+    def as_delete_flow_mod(self):
+        return self._as_flow_mod(FlowModCommand.OFPFC_DELETE)
+
+    def _as_flow_mod(self, command):
+        flow_mod = self._flow_mod_class()
+        flow_mod.match = self.match.as_of_match()
+        flow_mod.cookie = self.cookie
+        flow_mod.command = command
+        flow_mod.idle_timeout = self.idle_timeout
+        flow_mod.hard_timeout = self.hard_timeout
+        flow_mod.priority = self.priority
+        flow_mod.actions = [action.as_of_action() for action in self.actions]
+        return flow_mod
+
+    @classmethod
+    def from_of_flow_stats(cls, flow_stats, switch):
+        actions = [cls._action_class.from_of_action(action)
+                   for action in flow_stats.actions]
+        flow = cls(switch=switch,
+                   table_id=flow_stats.table_id.value,
+                   match=cls._match_class.from_of_match(flow_stats.match),
+                   priority=flow_stats.priority.value,
+                   idle_timeout=flow_stats.idle_timeout.value,
+                   hard_timeout=flow_stats.hard_timeout.value,
+                   cookie=flow_stats.cookie.value,
+                   actions=actions)
+        return flow
 
 
 class Match:  # pylint: disable=too-many-instance-attributes
@@ -111,3 +172,12 @@ class Match:  # pylint: disable=too-many-instance-attributes
             if key in match.__dict__:
                 setattr(match, key, value)
         return match
+
+    @classmethod
+    @abstractmethod
+    def from_of_match(cls, of_match):
+        pass
+
+    @abstractmethod
+    def as_of_match(self):
+        pass
