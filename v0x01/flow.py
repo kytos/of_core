@@ -126,7 +126,6 @@ class Match(MatchBase):
         return match
 
 
-
 class Action:
     """FlowAction represents a action to be executed once a flow is actived."""
 
@@ -168,7 +167,7 @@ class ActionOutput(Action):
             dictionary (dict): Dict that represent a ActionOutput.
 
         """
-        return {"type": "output",
+        return {"action_type": "output",
                 "port": self.port}
 
     @classmethod
@@ -208,7 +207,7 @@ class ActionSetVlan(Action):
             dictionary (dict): Dict that represent a ActionSetVlan.
 
         """
-        return {"type": "set_vlan",
+        return {"action_type": "set_vlan",
                 "vlan_id": self.vlan_id}
 
     @classmethod
