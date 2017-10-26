@@ -15,6 +15,8 @@ import pyof.v0x01.controller2switch.features_request
 import pyof.v0x01.controller2switch.stats_request
 import pyof.v0x01.symmetric.echo_reply
 
+from pyof.v0x01.controller2switch.common import StatsTypes
+
 import pyof.v0x04.asynchronous.error_msg
 import pyof.v0x04.common.header
 import pyof.v0x04.common.utils
@@ -65,20 +67,19 @@ class Main(KytosNApp):
 
     @staticmethod
     @listen_to('kytos/of_core.v0x01.messages.in.ofpt_stats_reply')
-    def handle_flow_stats_reply(event):
-        """Handle flow stats reply message.
-
-        This method updates the switches list with its Flow Stats.
+    def handle_stats_reply(event):
+        """This method handles stats replies for v0x01 switches.
 
         Args:
             event (:class:`~kytos.core.events.KytosEvent):
                 Event with ofpt_stats_reply in message.
         """
+        switch = event.source.switch
         msg = event.content['message']
-        if msg.body_type == \
-                pyof.v0x01.controller2switch.common.StatsTypes.OFPST_FLOW:
-            switch = event.source.switch
+        if msg.body_type == StatsTypes.OFPST_FLOW:
             switch.flows = msg.body
+        elif msg.body_type == StatsTypes.OFPST_DESC:
+            switch.update_description(msg.body)
 
     @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_features_reply')
     def handle_features_reply(self, event):
@@ -97,6 +98,7 @@ class Main(KytosNApp):
                 connection.protocol.state == 'waiting_features_reply'):
             connection.protocol.state = 'handshake_complete'
             connection.set_established_state()
+            version_utils.send_desc_request(self.controller, switch)
             if settings.SEND_SET_CONFIG:
                 version_utils.send_set_config(self.controller, switch)
             log.info('Connection %s, Switch %s: OPENFLOW HANDSHAKE COMPLETE',
@@ -108,13 +110,20 @@ class Main(KytosNApp):
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
-        """Handles Port Description Reply messages."""
+        """This method handles multipart replies for v0x04 switches.
+
+        Args:
+            event (:class:`~kytos.core.events.KytosEvent):
+                Event with ofpt_multipart_reply in message.
+        """
         switch = event.source.switch
         reply = event.content['message']
         if reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(switch, reply.body)
         elif reply.multipart_type == MultipartTypes.OFPMP_FLOW:
             switch.flows = reply.body
+        elif reply.multipart_type == MultipartTypes.OFPMP_DESC:
+            switch.update_description(reply.body)
 
     @listen_to('kytos/core.openflow.raw.in')
     def handle_raw_in(self, event):

@@ -16,7 +16,7 @@ def update_flow_list(controller, switch):
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
-            the controller beeing used.
+            the controller being used.
         switch(:class:`~kytos.core.switch.Switch`):
             target to send a stats request.
     """
@@ -27,6 +27,17 @@ def update_flow_list(controller, switch):
     # req.pack()
     emit_message_out(controller, switch.connection, stats_request)
 
+def send_desc_request(controller, switch):
+    """Send a description request to the switch.
+
+    Args:
+        controller(:class:`~kytos.core.controller.Controller`):
+            the controller being used.
+        switch(:class:`~kytos.core.switch.Switch`):
+            target to send a stats request.
+    """
+    stats_request = StatsRequest(body_type=StatsTypes.OFPST_DESC)
+    emit_message_out(controller, switch.connection, stats_request)
 
 def handle_features_reply(controller, event):
     """Handle OF v0x01 features_reply message events.
@@ -34,7 +45,7 @@ def handle_features_reply(controller, event):
     This is the end of the Handshake workflow of the OpenFlow Protocol.
 
     Parameters:
-        controller (Controller): Controller beeing used.
+        controller (Controller): Controller being used.
         event (KytosEvent): Event with features reply message.
     """
 
