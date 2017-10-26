@@ -86,8 +86,8 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
 class Match:  # pylint: disable=too-many-instance-attributes
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
-                 dl_vlan_pcp=None, dl_type=None, nw_tos=None, nw_proto=None,
-                 nw_src=None, nw_dst=None, tp_src=None, tp_dst=None):
+                 dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
+                 nw_dst=None, tp_src=None, tp_dst=None):
         # pylint: disable=too-many-arguments
         self.in_port = in_port
         self.dl_src = dl_src
@@ -95,7 +95,6 @@ class Match:  # pylint: disable=too-many-instance-attributes
         self.dl_vlan = dl_vlan
         self.dl_vlan_pcp = dl_vlan_pcp
         self.dl_type = dl_type
-        self.nw_tos = nw_tos
         self.nw_proto = nw_proto
         self.nw_src = nw_src
         self.nw_dst = nw_dst

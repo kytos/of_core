@@ -111,7 +111,6 @@ class Match(MatchBase):
                     dl_vlan=match.dl_vlan.value,
                     dl_vlan_pcp=match.dl_vlan_pcp.value,
                     dl_type=match.dl_type.value,
-                    nw_tos=match.nw_tos.value,
                     nw_proto=match.nw_proto.value,
                     nw_src=match.nw_src.value,
                     nw_dst=match.nw_dst.value,
