@@ -110,5 +110,5 @@ class Flow(FlowBase):
     _match_class = Match
 
     @classmethod
-    def from_of_flow_stats(cls, of_flow_stats):
+    def from_of_flow_stats(cls, of_flow_stats, switch):
         pass

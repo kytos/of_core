@@ -3,6 +3,7 @@
 
 from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
+from napps.kytos.of_core.flow import Stats
 
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
 from pyof.v0x01.common.flow_match import Match as OFMatch
@@ -139,6 +140,24 @@ class ActionSetVlan(Action):
         return OFActionVlanVid(vlan_id=self.vlan_id)
 
 
+class FlowStats(Stats):
+
+    def __init__(self):
+        self.byte_count = None
+        self.duration_sec = None
+        self.duration_nsec = None
+        self.packet_count = None
+
+    @classmethod
+    def from_of_flow_stats(cls, of_flow_stats):
+        stats = cls()
+        of_attributes = vars(of_flow_stats).items()
+        for stats_name, value in of_attributes:
+            if hasattr(stats, stats_name):
+                setattr(stats, stats_name, value.value)
+        return stats
+
+
 class Flow(FlowBase):
     """Behaves the same as 1.0's flow from end-user perspective.
 
@@ -147,6 +166,7 @@ class Flow(FlowBase):
     _action_class = Action
     _flow_mod_class = FlowMod
     _match_class = Match
+    _stats_class = FlowStats
 
     @classmethod
     def from_of_flow_stats(cls, of_flow_stats, switch):
@@ -160,4 +180,5 @@ class Flow(FlowBase):
                     cookie=of_flow_stats.cookie.value,
                     actions=[Action.from_of_action(of_action)
                              for of_action in of_flow_stats.actions
-                             if of_action is not None])
+                             if of_action is not None],
+                    stats=FlowStats.from_of_flow_stats(of_flow_stats))

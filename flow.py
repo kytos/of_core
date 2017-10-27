@@ -21,12 +21,15 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     _action_class = None
     _flow_mod_class = None
     _match_class = None
+    _stats_class = None
 
     def __init__(self, switch, table_id=0xff, match=None, priority=0,
-                 idle_timeout=0, hard_timeout=0, cookie=0, actions=None):
+                 idle_timeout=0, hard_timeout=0, cookie=0, actions=None,
+                 stats=None):
         """Assign parameters to attributes.
 
         Args:
+            stats (Stats): Flow latest statistics.
             table_id (int): The index of a single table or 0xff for all tables.
             match (|match|): Match object.
             priority (int): Priority level of flow entry.
@@ -45,7 +48,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         self.hard_timeout = hard_timeout
         self.cookie = cookie
         self.actions = actions or []
-        self.stats = {}
+        self.stats = stats or self._stats_class()  # pylint: disable=E1102
 
     @property
     def id(self):  # pylint: disable=invalid-name
@@ -78,6 +81,8 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
                      'actions': [action.as_dict() for action in self.actions]}
         if include_id:
             flow_dict['id'] = self.id
+            flow_dict['stats'] = self.stats.as_dict()
+
         return flow_dict
 
     @classmethod
@@ -90,6 +95,8 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
         if 'match' in flow_dict:
             flow.match = cls._match_class.from_dict(flow_dict['match'])
+        if 'stats' in flow_dict:
+            flow.stats = cls._stats_class.from_dict(flow_dict['stats'])
 
         flow.actions = []
         if 'actions' in flow_dict:
@@ -131,7 +138,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
     @classmethod
     @abstractmethod
-    def from_of_flow_stats(self, of_flow_stats):
+    def from_of_flow_stats(cls, of_flow_stats, switch):
         pass
 
 
@@ -171,3 +178,20 @@ class Match:  # pylint: disable=too-many-instance-attributes
     @abstractmethod
     def as_of_match(self):
         pass
+
+
+class Stats:
+    """Simple class to store statistics as attributes and values."""
+
+    def as_dict(self):
+        return {attribute: value
+                for attribute, value in vars(self).items()
+                if value is not None}
+
+    @classmethod
+    def from_dict(cls, stats_dict):
+        stats = cls()
+        for stats_name, value in stats_dict:
+            if hasattr(stats, stats_name):
+                setattr(stats, stats_name, value)
+        return stats
