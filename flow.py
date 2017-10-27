@@ -60,9 +60,10 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         Returns:
             str: Flow unique identifier (md5sum).
         """
-        json_str = self.as_json(sort_keys=True, include_id=False)
+        flow_str = self.as_json(sort_keys=True, include_id=False)
+        flow_str += str(self.switch.id)
         md5sum = md5()
-        md5sum.update(json_str.encode('utf-8'))
+        md5sum.update(flow_str.encode('utf-8'))
         return md5sum.hexdigest()
 
     def as_dict(self, include_id=True):
