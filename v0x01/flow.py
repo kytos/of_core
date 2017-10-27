@@ -147,3 +147,17 @@ class Flow(FlowBase):
     _action_class = Action
     _flow_mod_class = FlowMod
     _match_class = Match
+
+    @classmethod
+    def from_of_flow_stats(cls, of_flow_stats, switch):
+        """Create a flow with stats latest based on pyof FlowStats."""
+        return Flow(switch,
+                    table_id=of_flow_stats.table_id.value,
+                    match=Match.from_of_match(of_flow_stats.match),
+                    priority=of_flow_stats.priority.value,
+                    idle_timeout=of_flow_stats.idle_timeout.value,
+                    hard_timeout=of_flow_stats.hard_timeout.value,
+                    cookie=of_flow_stats.cookie.value,
+                    actions=[Action.from_of_action(of_action)
+                             for of_action in of_flow_stats.actions
+                             if of_action is not None])

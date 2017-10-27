@@ -130,18 +130,9 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         return flow_mod
 
     @classmethod
-    def from_of_flow_stats(cls, flow_stats, switch):
-        actions = [cls._action_class.from_of_action(action)
-                   for action in flow_stats.actions]
-        flow = cls(switch=switch,
-                   table_id=flow_stats.table_id.value,
-                   match=cls._match_class.from_of_match(flow_stats.match),
-                   priority=flow_stats.priority.value,
-                   idle_timeout=flow_stats.idle_timeout.value,
-                   hard_timeout=flow_stats.hard_timeout.value,
-                   cookie=flow_stats.cookie.value,
-                   actions=actions)
-        return flow
+    @abstractmethod
+    def from_of_flow_stats(self, of_flow_stats):
+        pass
 
 
 class Match:  # pylint: disable=too-many-instance-attributes

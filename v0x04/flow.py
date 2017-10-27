@@ -108,3 +108,7 @@ class Flow(FlowBase):
     _action_class = Action
     _flow_mod_class = FlowMod
     _match_class = Match
+
+    @classmethod
+    def from_of_flow_stats(cls, of_flow_stats):
+        pass
