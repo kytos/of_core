@@ -3,7 +3,7 @@
 
 from napps.kytos.of_core.flow import Flow as FlowBase
 from napps.kytos.of_core.flow import Match as MatchBase
-from napps.kytos.of_core.flow import Stats
+from napps.kytos.of_core.flow import Stats as StatsBase
 
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
 from pyof.v0x01.common.flow_match import Match as OFMatch
@@ -140,6 +140,21 @@ class ActionSetVlan(Action):
         return OFActionVlanVid(vlan_id=self.vlan_id)
 
 
+class Stats(StatsBase):
+
+    def update(self, of_stats):
+        of_attributes = vars(of_stats)
+        for stats_name, value in of_attributes.items():
+            if hasattr(self, stats_name):
+                setattr(self, stats_name, value.value)
+
+    @classmethod
+    def from_of_flow_stats(cls, of_stats):
+        stats = cls()
+        stats.update(of_stats)
+        return stats
+
+
 class FlowStats(Stats):
 
     def __init__(self):
@@ -148,14 +163,22 @@ class FlowStats(Stats):
         self.duration_nsec = None
         self.packet_count = None
 
-    @classmethod
-    def from_of_flow_stats(cls, of_flow_stats):
-        stats = cls()
-        of_attributes = vars(of_flow_stats).items()
-        for stats_name, value in of_attributes:
-            if hasattr(stats, stats_name):
-                setattr(stats, stats_name, value.value)
-        return stats
+
+class PortStats(Stats):  # pylint: disable=too-many-instance-attributes
+
+    def __init__(self):
+        self.rx_packets = None
+        self.tx_packets = None
+        self.rx_bytes = None
+        self.tx_bytes = None
+        self.rx_dropped = None
+        self.tx_dropped = None
+        self.rx_errors = None
+        self.tx_errors = None
+        self.rx_frame_err = None
+        self.rx_over_err = None
+        self.rx_crc_err = None
+        self.collisions = None
 
 
 class Flow(FlowBase):
