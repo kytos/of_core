@@ -9,7 +9,7 @@ from hashlib import md5
 from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
 
-class Flow(ABC):  # pylint: disable=too-many-instance-attributes
+class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     """Class to abstract a Flow to switches.
 
     This class represents a Flow installed or to be installed inside the
@@ -18,10 +18,9 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
     """
 
     # Subclasses must set their version-specific classes
-    _action_class = None
+    _action_factory = None
     _flow_mod_class = None
     _match_class = None
-    _stats_class = None
 
     def __init__(self, switch, table_id=0xff, match=None, priority=0,
                  idle_timeout=0, hard_timeout=0, cookie=0, actions=None,
@@ -29,14 +28,14 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         """Assign parameters to attributes.
 
         Args:
-            stats (Stats): Flow latest statistics.
             table_id (int): The index of a single table or 0xff for all tables.
             match (|match|): Match object.
             priority (int): Priority level of flow entry.
             idle_timeout (int): Idle time before discarding in seconds.
             hard_timeout (int): Max time before discarding in seconds.
             cookie (int): Opaque controller-issued identifier.
-            actions (|list_of_actions|): List of action to apply.
+            actions (|list_of_actions|): List of actions to apply.
+            stats (Stats): Flow latest statistics.
         """
         # pylint: disable=too-many-arguments,too-many-locals
         self.switch = switch
@@ -48,7 +47,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         self.hard_timeout = hard_timeout
         self.cookie = cookie
         self.actions = actions or []
-        self.stats = stats or self._stats_class()  # pylint: disable=E1102
+        self.stats = stats or FlowStats()  # pylint: disable=E1102
 
     @property
     def id(self):  # pylint: disable=invalid-name
@@ -59,6 +58,7 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
 
         Returns:
             str: Flow unique identifier (md5sum).
+
         """
         flow_str = self.as_json(sort_keys=True, include_id=False)
         flow_str += str(self.switch.id)
@@ -97,12 +97,11 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         if 'match' in flow_dict:
             flow.match = cls._match_class.from_dict(flow_dict['match'])
         if 'stats' in flow_dict:
-            flow.stats = cls._stats_class.from_dict(flow_dict['stats'])
-
-        flow.actions = []
+            flow.stats = FlowStats.from_dict(flow_dict['stats'])
         if 'actions' in flow_dict:
+            flow.actions = []
             for action_dict in flow_dict['actions']:
-                action = cls._action_class.from_dict(action_dict)
+                action = cls._action_factory.from_dict(action_dict)
                 flow.actions.append(action)
 
         return flow
@@ -119,13 +118,14 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         """
         return json.dumps(self.as_dict(include_id), sort_keys=sort_keys)
 
-    def as_add_flow_mod(self):
-        return self._as_flow_mod(FlowModCommand.OFPFC_ADD)
+    def as_of_add_flow_mod(self):
+        return self._as_of_flow_mod(FlowModCommand.OFPFC_ADD)
 
-    def as_delete_flow_mod(self):
-        return self._as_flow_mod(FlowModCommand.OFPFC_DELETE)
+    def as_of_delete_flow_mod(self):
+        return self._as_of_flow_mod(FlowModCommand.OFPFC_DELETE)
 
-    def _as_flow_mod(self, command):
+    @abstractmethod
+    def _as_of_flow_mod(self, command):
         # Disable not-callable error as subclasses set a class
         flow_mod = self._flow_mod_class()  # pylint: disable=E1102
         flow_mod.match = self.match.as_of_match()
@@ -134,16 +134,86 @@ class Flow(ABC):  # pylint: disable=too-many-instance-attributes
         flow_mod.idle_timeout = self.idle_timeout
         flow_mod.hard_timeout = self.hard_timeout
         flow_mod.priority = self.priority
-        flow_mod.actions = [action.as_of_action() for action in self.actions]
         return flow_mod
+
+    @staticmethod
+    @abstractmethod
+    def _get_of_actions(of_flow_stats):
+        pass
+
+    @classmethod
+    def from_of_flow_stats(cls, of_flow_stats, switch):
+        """Create a flow with stats latest based on pyof FlowStats."""
+        of_actions = cls._get_of_actions(of_flow_stats)
+        actions = (cls._action_factory.from_of_action(of_action)
+                   for of_action in of_actions)
+        return cls(switch,
+                   table_id=of_flow_stats.table_id.value,
+                   match=cls._match_class.from_of_match(of_flow_stats.match),
+                   priority=of_flow_stats.priority.value,
+                   idle_timeout=of_flow_stats.idle_timeout.value,
+                   hard_timeout=of_flow_stats.hard_timeout.value,
+                   cookie=of_flow_stats.cookie.value,
+                   actions=actions,
+                   stats=FlowStats.from_of_flow_stats(of_flow_stats))
+
+
+class ActionBase(ABC):
+
+    def as_dict(self):
+        return vars(self)
+
+    @classmethod
+    def from_dict(cls, action_dict):
+        action = cls(None)
+        for attr_name, value in action_dict.items():
+            if hasattr(action, attr_name):
+                setattr(action, attr_name, value)
+        return action
+
+    @abstractmethod
+    def as_of_action(self):
+        """Create OF action for a FlowMod."""
+        pass
 
     @classmethod
     @abstractmethod
-    def from_of_flow_stats(cls, of_flow_stats, switch):
+    def from_of_action(cls, of_action):
         pass
 
 
-class Match:  # pylint: disable=too-many-instance-attributes
+class ActionFactoryBase(ABC):
+    """FlowAction represents a action to be executed once a flow is actived."""
+
+    # key: action_type or pyof class, value: ActionBase child
+    _action_class = {
+        'output': None,
+        'set_vlan': None,
+        # pyof class: ActionBase child
+    }
+
+    @classmethod
+    def from_dict(cls, action_dict):
+        """Build one of the Actions from a dictionary.
+
+        Args:
+            action_dict (dict): Python dictionary to build a FlowAction.
+        """
+        action_type = action_dict.get('action_type')
+        action_class = cls._action_class[action_type]
+        if action_class:
+            return action_class.from_dict(action_dict)
+
+    @classmethod
+    def from_of_action(cls, of_action):
+        of_class = type(of_action).__class__
+        action_class = cls._action_class.get(of_class)
+        if action_class:
+            return action_class.from_of_action(of_action)
+
+
+class MatchBase:  # pylint: disable=too-many-instance-attributes
+
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
                  nw_dst=None, tp_src=None, tp_dst=None):
@@ -185,6 +255,7 @@ class Stats:
     """Simple class to store statistics as attributes and values."""
 
     def as_dict(self):
+        """Exclude attributes with `None` values."""
         return {attribute: value
                 for attribute, value in vars(self).items()
                 if value is not None}
@@ -192,7 +263,57 @@ class Stats:
     @classmethod
     def from_dict(cls, stats_dict):
         stats = cls()
-        for stats_name, value in stats_dict:
-            if hasattr(stats, stats_name):
-                setattr(stats, stats_name, value)
+        cls._update(stats, stats_dict.items())
         return stats
+
+    @classmethod
+    def from_of_flow_stats(cls, of_stats):
+        stats = cls()
+        stats.update(of_stats)
+        return stats
+
+    def update(self, of_stats):
+        """Given a pyof stats object, update stats attributes' values.
+
+        pyof values are GenericType instances whose native values can be
+        accessed by `.value`.
+        """
+        # Generator for GenericType values
+        attr_name_value = ((attr_name, gen_type.value)
+                           for attr_name, gen_type in vars(of_stats).items())
+        self._update(self, attr_name_value)
+
+    @staticmethod
+    def _update(obj, iterable):
+        """From attribute name and value pairs, update ``obj``."""
+        for attr_name, value in iterable:
+            if hasattr(obj, attr_name):
+                setattr(obj, attr_name, value)
+
+
+class FlowStats(Stats):
+    """Common fields for 1.0 and 1.3 FlowStats."""
+
+    def __init__(self):
+        self.byte_count = None
+        self.duration_sec = None
+        self.duration_nsec = None
+        self.packet_count = None
+
+
+class PortStats(Stats):  # pylint: disable=too-many-instance-attributes
+    """Common fields for 1.0 and 1.3 PortStats."""
+
+    def __init__(self):
+        self.rx_packets = None
+        self.tx_packets = None
+        self.rx_bytes = None
+        self.tx_bytes = None
+        self.rx_dropped = None
+        self.tx_dropped = None
+        self.rx_errors = None
+        self.tx_errors = None
+        self.rx_frame_err = None
+        self.rx_over_err = None
+        self.rx_crc_err = None
+        self.collisions = None

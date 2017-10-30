@@ -1,14 +1,13 @@
 """Module with main classes related to Flows."""
 # pylint: disable=missing-docstring
 
-from napps.kytos.of_core.flow import Flow as FlowBase
-from napps.kytos.of_core.flow import Match as MatchBase
-from napps.kytos.of_core.flow import Stats as StatsBase
-
-from pyof.v0x01.controller2switch.flow_mod import FlowMod
-from pyof.v0x01.common.flow_match import Match as OFMatch
 from pyof.v0x01.common.action import ActionOutput as OFActionOutput
 from pyof.v0x01.common.action import ActionVlanVid as OFActionVlanVid
+from pyof.v0x01.common.flow_match import Match as OFMatch
+from pyof.v0x01.controller2switch.flow_mod import FlowMod
+
+from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
+                                      MatchBase)
 
 
 class Match(MatchBase):
@@ -35,30 +34,7 @@ class Match(MatchBase):
         return match
 
 
-class Action:
-    """FlowAction represents a action to be executed once a flow is actived."""
-
-    @staticmethod
-    def from_dict(dict_content):
-        """Build one of the Actions from a dictionary.
-
-        Args:
-            dict_content (dict): Python dictionary to build a FlowAction.
-        """
-        if dict_content['action_type'] == 'output':
-            return ActionOutput.from_dict(dict_content)
-        elif dict_content['action_type'] == 'set_vlan':
-            return ActionSetVlan.from_dict(dict_content)
-
-    @classmethod
-    def from_of_action(cls, of_action):
-        if isinstance(of_action, OFActionOutput):
-            return ActionOutput.from_of_action(of_action)
-        elif isinstance(of_action, OFActionVlanVid):
-            return ActionSetVlan.from_of_action(of_action)
-
-
-class ActionOutput(Action):
+class ActionOutput(ActionBase):
     """FlowAction represents a change in forwarding network into a port."""
 
     def __init__(self, port):
@@ -68,29 +44,7 @@ class ActionOutput(Action):
             port (int): Specific port number.
         """
         self.port = port
-
-    def as_dict(self):
-        """Return this action as a python dictionary.
-
-        Returns:
-            dictionary (dict): Dict that represent a ActionOutput.
-
-        """
-        return {"action_type": "output",
-                "port": self.port}
-
-    @classmethod
-    def from_dict(cls, dict_content):
-        """Build an ActionOutput from a dictionary.
-
-        Args:
-            dict_content (dict): Python dictionary with ActionOutput attribute.
-
-        Returns:
-            :class:`ActionOutput`: A instance of ActionOutput.
-
-        """
-        return cls(port=dict_content['port'])
+        self.action_type = 'output'
 
     @classmethod
     def from_of_action(cls, of_action):
@@ -100,37 +54,13 @@ class ActionOutput(Action):
         return OFActionOutput(port=self.port)
 
 
-class ActionSetVlan(Action):
+class ActionSetVlan(ActionBase):
     """FlowAction represents a change in the vlan id."""
 
     def __init__(self, vlan_id):
-        """Require a vlan id.
-
-        """
+        """Require a vlan id."""
         self.vlan_id = vlan_id
-
-    def as_dict(self):
-        """Return this action as a python dictionary.
-
-        Returns:
-            dictionary (dict): Dict that represent a ActionSetVlan.
-
-        """
-        return {"action_type": "set_vlan",
-                "vlan_id": self.vlan_id}
-
-    @classmethod
-    def from_dict(cls, dict_content):
-        """Build an ActionSetVlan from a dictionary.
-
-        Args:
-            dict_content (dict): Python dictionary with attributes.
-
-        Returns:
-            :class:`ActionSetVlan`: A instance of ActionSetVlan.
-
-        """
-        return cls(vlan_id=dict_content['vlan_id'])
+        self.action_type = 'set_vlan'
 
     @classmethod
     def from_of_action(cls, of_action):
@@ -140,68 +70,32 @@ class ActionSetVlan(Action):
         return OFActionVlanVid(vlan_id=self.vlan_id)
 
 
-class Stats(StatsBase):
+class Action(ActionFactoryBase):
+    """FlowAction represents a action to be executed once a flow is actived."""
 
-    def update(self, of_stats):
-        of_attributes = vars(of_stats)
-        for stats_name, value in of_attributes.items():
-            if hasattr(self, stats_name):
-                setattr(self, stats_name, value.value)
-
-    @classmethod
-    def from_of_flow_stats(cls, of_stats):
-        stats = cls()
-        stats.update(of_stats)
-        return stats
-
-
-class FlowStats(Stats):
-
-    def __init__(self):
-        self.byte_count = None
-        self.duration_sec = None
-        self.duration_nsec = None
-        self.packet_count = None
-
-
-class PortStats(Stats):  # pylint: disable=too-many-instance-attributes
-
-    def __init__(self):
-        self.rx_packets = None
-        self.tx_packets = None
-        self.rx_bytes = None
-        self.tx_bytes = None
-        self.rx_dropped = None
-        self.tx_dropped = None
-        self.rx_errors = None
-        self.tx_errors = None
-        self.rx_frame_err = None
-        self.rx_over_err = None
-        self.rx_crc_err = None
-        self.collisions = None
+    _action_class = {
+        'output': ActionOutput,
+        'set_vlan': ActionSetVlan,
+        OFActionOutput: ActionOutput,
+        OFActionVlanVid: ActionSetVlan
+    }
 
 
 class Flow(FlowBase):
     """Behaves the same as 1.0's flow from end-user perspective.
 
-    This subclass only defines version-specific classes"""
+    This subclass only defines version-specific classes.
+    """
 
-    _action_class = Action
+    _action_factory = Action
     _flow_mod_class = FlowMod
     _match_class = Match
-    _stats_class = FlowStats
 
-    @classmethod
-    def from_of_flow_stats(cls, of_flow_stats, switch):
-        """Create a flow with stats latest based on pyof FlowStats."""
-        return Flow(switch,
-                    table_id=of_flow_stats.table_id.value,
-                    match=Match.from_of_match(of_flow_stats.match),
-                    priority=of_flow_stats.priority.value,
-                    idle_timeout=of_flow_stats.idle_timeout.value,
-                    hard_timeout=of_flow_stats.hard_timeout.value,
-                    cookie=of_flow_stats.cookie.value,
-                    actions=[Action.from_of_action(of_action)
-                             for of_action in of_flow_stats.actions
-                             if of_action is not None],
-                    stats=FlowStats.from_of_flow_stats(of_flow_stats))
+    @staticmethod
+    def _get_of_actions(of_flow_stats):
+        return of_flow_stats.actions
+
+    def _as_of_flow_mod(self, command):
+        flow_mod = super()._as_of_flow_mod(command)
+        flow_mod.actions = [action.as_of_action() for action in self.actions]
+        return flow_mod

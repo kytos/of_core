@@ -1,59 +1,34 @@
 """Module with main classes related to Flows."""
 # pylint: disable=missing-docstring
 
-from abc import ABC, abstractmethod
+from itertools import chain
 
 from pyof.v0x04.common.action import ActionOutput as OFActionOutput
 from pyof.v0x04.common.action import ActionSetField as OFActionSetField
+from pyof.v0x04.common.flow_instructions import (InstructionApplyAction,
+                                                 InstructionType)
 from pyof.v0x04.common.flow_match import Match as OFMatch
-from pyof.v0x04.common.flow_match import (OxmMatchFields, OxmTLV,
-                                          OxmOfbMatchField, VlanId)
+from pyof.v0x04.common.flow_match import (OxmMatchFields, OxmOfbMatchField,
+                                          OxmTLV, VlanId)
 from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
-from napps.kytos.of_core.flow import Flow as FlowBase
-from napps.kytos.of_core.flow import Match as MatchBase
+from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
+                                      MatchBase)
 from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 
 
-class Action(ABC):
-    """FlowAction represents a action to be executed once a flow is actived."""
-
-    def as_dict(self):
-        return self.__dict__
-
-    @staticmethod
-    def from_dict(dict_content):
-        """Build one of the Actions from a dictionary.
-
-        Args:
-            dict_content (dict): Python dictionary to build a FlowAction.
-        """
-        if dict_content['action_type'] == 'output':
-            return ActionOutput.from_dict(dict_content)
-        elif dict_content['action_type'] == 'set_vlan':
-            return ActionSetVlan.from_dict(dict_content)
-
-    @classmethod
-    def from_of_action(cls, action):
-        if isinstance(action, OFActionOutput):
-            return ActionOutput.from_of_action(action)
-        elif isinstance(action, OFActionSetField):
-            return ActionSetVlan.from_of_action(action)
-
-    @abstractmethod
-    def as_of_action(self):
-        pass
-
-
-class ActionSetVlan(Action):
+class ActionSetVlan(ActionBase):
+    """FlowAction represents a change in the vlan id."""
 
     def __init__(self, vlan_id):
+        """Require a vlan id."""
         self.vlan_id = vlan_id
         self.action_type = 'set_vlan'
 
     @classmethod
-    def from_dict(cls, dict_content):
-        return cls(vlan_id=dict_content['vlan_id'])
+    def from_of_action(cls, of_action):
+        vlan_id = int.from_bytes(of_action.field.oxm_value, 'big') & 4095
+        return cls(vlan_id)
 
     def as_of_action(self):
         tlv = OxmTLV()
@@ -63,17 +38,35 @@ class ActionSetVlan(Action):
         return OFActionSetField(field=tlv)
 
 
-class ActionOutput(Action):
-    def __init__(self, port=None):
-        self.action_type = 'output'
+class ActionOutput(ActionBase):
+    """FlowAction represents a change in forwarding network into a port."""
+
+    def __init__(self, port):
+        """Require an output port.
+
+        Args:
+            port (int): Specific port number.
+        """
         self.port = port
+        self.action_type = 'output'
 
     @classmethod
-    def from_dict(cls, dict_content):
-        return cls(port=dict_content['port'])
+    def from_of_action(cls, of_action):
+        return cls(port=of_action.port.value)
 
     def as_of_action(self):
         return OFActionOutput(port=self.port)
+
+
+class Action(ActionFactoryBase):
+    """FlowAction represents a action to be executed once a flow is actived."""
+
+    _action_class = {
+        'output': ActionOutput,
+        'set_vlan': ActionSetVlan,
+        OFActionOutput: ActionOutput,
+        OFActionSetField: ActionSetVlan
+    }
 
 
 class Match(MatchBase):
@@ -103,12 +96,27 @@ class Match(MatchBase):
 class Flow(FlowBase):
     """Behaves the same as 1.0's flow from end-user perspective.
 
-    This subclass only defines version-specific classes"""
+    This subclass only defines version-specific classes.
+    """
 
-    _action_class = Action
+    _action_factory = Action
     _flow_mod_class = FlowMod
     _match_class = Match
 
-    @classmethod
-    def from_of_flow_stats(cls, of_flow_stats, switch):
-        pass
+    @staticmethod
+    def _get_of_actions(of_flow_stats):
+        # Add list of high-level actions
+        # Filter action instructions
+        apply_actions = InstructionType.OFPIT_APPLY_ACTIONS
+        of_instructions = (ins for ins in of_flow_stats.instructions
+                           if ins.instruction_type == apply_actions)
+        # Get actions from a list of actions
+        return chain.from_iterable(ins.actions for ins in of_instructions)
+
+    def _as_of_flow_mod(self, command):
+        of_flow_mod = super()._as_of_flow_mod(command)
+        of_actions = [action.as_of_action() for action in self.actions]
+        of_instruction = InstructionApplyAction(actions=of_actions)
+        of_flow_mod.instructions = [of_instruction]
+        print(of_flow_mod.instructions)
+        return of_flow_mod
