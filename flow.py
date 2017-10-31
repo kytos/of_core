@@ -12,11 +12,12 @@ from hashlib import md5
 from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
 
-class FlowFactory:
+class FlowFactory:  # pylint: disable=too-few-public-methods
     """Choose the correct Flow according to OpenFlow version."""
 
     @staticmethod
     def from_of_flow_stats(of_flow_stats, switch):
+        """Return a Flow for the switch OpenFlow version."""
         of_version = switch.connection.protocol.version
         for flow_class in FlowBase.__subclasses__():
             if flow_class.of_version == of_version:
@@ -81,7 +82,6 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
 
         """
         flow_str = self.as_json(sort_keys=True, include_id=False)
-        flow_str += str(self.switch.id)
         md5sum = md5()
         md5sum.update(flow_str.encode('utf-8'))
         return md5sum.hexdigest()
@@ -98,13 +98,15 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
             dict: Serializable dictionary.
 
         """
-        flow_dict = {'table_id': self.table_id,
-                     'match': self.match.as_dict(),
-                     'priority': self.priority,
-                     'idle_timeout': self.idle_timeout,
-                     'hard_timeout': self.hard_timeout,
-                     'cookie': self.cookie,
-                     'actions': [action.as_dict() for action in self.actions]}
+        flow_dict = {
+            'switch': self.switch.id,
+            'table_id': self.table_id,
+            'match': self.match.as_dict(),
+            'priority': self.priority,
+            'idle_timeout': self.idle_timeout,
+            'hard_timeout': self.hard_timeout,
+            'cookie': self.cookie,
+            'actions': [action.as_dict() for action in self.actions]}
         if include_id:
             # Avoid infinite recursion
             flow_dict['id'] = self.id
@@ -122,6 +124,8 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         for attr_name, attr_value in flow_dict.items():
             if attr_name in vars(flow):
                 setattr(flow, attr_name, attr_value)
+
+        flow.switch = switch
 
         if 'stats' in flow_dict:
             flow.stats = FlowStats.from_dict(flow_dict['stats'])

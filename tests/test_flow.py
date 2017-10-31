@@ -12,8 +12,10 @@ class TestFlow(unittest.TestCase):
 
     def test_flow_mod(self):
         """Convert a dict to flow and vice-versa."""
+        switch = Switch('dpid')
         expected = {
-            'id': 'e5b36e2e5235c3a1587e8064b263a108',
+            'id': '1ce5d08a46496fcb856cb603a5bfa00f',
+            'switch': switch.id,
             'table_id': 1,
             'match': {
                 'dl_src': '11:22:33:44:55:66'
@@ -26,7 +28,6 @@ class TestFlow(unittest.TestCase):
                 {'action_type': 'set_vlan',
                  'vlan_id': 6}],
             'stats': {}}
-        switch = Switch('dpid')
         for flow_class in Flow01, Flow04:
             with self.subTest(flow_class=flow_class):
                 flow = flow_class.from_dict(expected, switch)
