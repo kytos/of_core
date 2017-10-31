@@ -1,6 +1,4 @@
-"""Module with main classes related to Flows."""
-# pylint: disable=missing-docstring
-
+"""Deal with OpenFlow 1.0 specificities related to flows."""
 from pyof.v0x01.common.action import ActionOutput as OFActionOutput
 from pyof.v0x01.common.action import ActionVlanVid as OFActionVlanVid
 from pyof.v0x01.common.flow_match import Match as OFMatch
@@ -11,8 +9,11 @@ from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
 
 
 class Match(MatchBase):
+    """High-level Match for OpenFlow 1.0."""
+
     @classmethod
     def from_of_match(cls, of_match):
+        """Return an instance from a pyof Match."""
         match = cls(in_port=of_match.in_port.value,
                     dl_src=of_match.dl_src.value,
                     dl_dst=of_match.dl_dst.value,
@@ -27,6 +28,7 @@ class Match(MatchBase):
         return match
 
     def as_of_match(self):
+        """Return a pyof Match instance with current contents."""
         match = OFMatch()
         for field, value in self.__dict__.items():
             if value is not None:
@@ -35,7 +37,7 @@ class Match(MatchBase):
 
 
 class ActionOutput(ActionBase):
-    """FlowAction represents a change in forwarding network into a port."""
+    """Action with an output port."""
 
     def __init__(self, port):
         """Require an output port.
@@ -48,31 +50,40 @@ class ActionOutput(ActionBase):
 
     @classmethod
     def from_of_action(cls, of_action):
+        """Return a high-level ActionOuput instance from pyof ActionOutput."""
         return ActionOutput(port=of_action.port.value)
 
     def as_of_action(self):
+        """Return a pyof ActionOuput instance."""
         return OFActionOutput(port=self.port)
 
 
 class ActionSetVlan(ActionBase):
-    """FlowAction represents a change in the vlan id."""
+    """Action to set VLAN ID."""
 
     def __init__(self, vlan_id):
-        """Require a vlan id."""
+        """Require a VLAN ID."""
         self.vlan_id = vlan_id
         self.action_type = 'set_vlan'
 
     @classmethod
     def from_of_action(cls, of_action):
+        """Return a high-level ActionSetVlan object from pyof ActionVlanVid."""
         return cls(vlan_id=of_action.vlan_id.value)
 
     def as_of_action(self):
+        """Return a pyof ActionVlanVid instance."""
         return OFActionVlanVid(vlan_id=self.vlan_id)
 
 
 class Action(ActionFactoryBase):
-    """FlowAction represents a action to be executed once a flow is actived."""
+    """An action to be executed once a flow is activated.
 
+    This class behavies like a factory but has no "Factory" suffix for end-user
+    usability issues.
+    """
+
+    # Set v0x01 classes for action types and pyof classes
     _action_class = {
         'output': ActionOutput,
         'set_vlan': ActionSetVlan,
@@ -82,9 +93,9 @@ class Action(ActionFactoryBase):
 
 
 class Flow(FlowBase):
-    """Behaves the same as 1.0's flow from end-user perspective.
+    """High-level flow representation for OpenFlow 1.0.
 
-    This subclass only defines version-specific classes.
+    This is a subclass that only deals with 1.0 flow actions.
     """
 
     _action_factory = Action
@@ -93,9 +104,11 @@ class Flow(FlowBase):
 
     @staticmethod
     def _get_of_actions(of_flow_stats):
+        """Return the pyof actions from pyof ``FlowStats.actions``."""
         return of_flow_stats.actions
 
     def _as_of_flow_mod(self, command):
+        """Return pyof FlowMod with a ``command`` to add or delete a flow."""
         flow_mod = super()._as_of_flow_mod(command)
         flow_mod.actions = [action.as_of_action() for action in self.actions]
         return flow_mod

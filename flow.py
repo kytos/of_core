@@ -1,6 +1,9 @@
-"""Module with main classes related to Flows."""
-# pylint: disable=missing-docstring
+"""High-level abstraction for Flows of multiple OpenFlow versions.
 
+Use common fields of FlowStats/FlowMod of supported OF versions. ``match`` and
+``actions`` fields are different, so Flow, Action and Match related classes are
+inherited in v0x01 and v0x04 modules.
+"""
 import json
 from abc import ABC, abstractmethod
 from hashlib import md5
@@ -28,14 +31,16 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         """Assign parameters to attributes.
 
         Args:
+            switch (kytos.core.switch.Switch): Switch ID is used to uniquely
+                identify a flow.
             table_id (int): The index of a single table or 0xff for all tables.
             match (|match|): Match object.
             priority (int): Priority level of flow entry.
-            idle_timeout (int): Idle time before discarding in seconds.
-            hard_timeout (int): Max time before discarding in seconds.
+            idle_timeout (int): Idle time before discarding, in seconds.
+            hard_timeout (int): Max time before discarding, in seconds.
             cookie (int): Opaque controller-issued identifier.
             actions (|list_of_actions|): List of actions to apply.
-            stats (Stats): Flow latest statistics.
+            stats (Stats): Latest flow statistics.
         """
         # pylint: disable=too-many-arguments,too-many-locals
         self.switch = switch
@@ -51,10 +56,11 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
 
     @property
     def id(self):  # pylint: disable=invalid-name
-        """Return the flow unique identifier.
+        """Return this flow unique identifier.
 
-        Calculates the hash of the object by using Python's md5 on the json
-        without statistics.
+        Calculate an md5 hash based on this object's modified json string. The
+        json for ID calculation excludes ``stats`` attribute that changes over
+        time.
 
         Returns:
             str: Flow unique identifier (md5sum).
@@ -67,10 +73,15 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         return md5sum.hexdigest()
 
     def as_dict(self, include_id=True):
-        """Return the representation of a flow as a python dictionary.
+        """Return the Flow as a serializable Python dictionary.
+
+        Args:
+            include_id (bool): Default is ``True``. Internally, it is set to
+                ``False`` when calculating the flow ID that is based in this
+                dictionary's JSON string.
 
         Returns:
-            dict: Dictionary using flow attributes.
+            dict: Serializable dictionary.
 
         """
         flow_dict = {'table_id': self.table_id,
@@ -81,23 +92,29 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
                      'cookie': self.cookie,
                      'actions': [action.as_dict() for action in self.actions]}
         if include_id:
+            # Avoid infinite recursion
             flow_dict['id'] = self.id
+            # Remove statistics that change over time
             flow_dict['stats'] = self.stats.as_dict()
 
         return flow_dict
 
     @classmethod
     def from_dict(cls, flow_dict, switch):
+        """Return an instance with values from ``flow_dict``."""
         flow = cls(switch)
 
+        # Set attributes found in ``flow_dict``
         for attr_name, attr_value in flow_dict.items():
-            if attr_name in flow.__dict__:
+            if attr_name in vars(flow):
                 setattr(flow, attr_name, attr_value)
 
-        if 'match' in flow_dict:
-            flow.match = cls._match_class.from_dict(flow_dict['match'])
         if 'stats' in flow_dict:
             flow.stats = FlowStats.from_dict(flow_dict['stats'])
+
+        # Version-specific attributes
+        if 'match' in flow_dict:
+            flow.match = cls._match_class.from_dict(flow_dict['match'])
         if 'actions' in flow_dict:
             flow.actions = []
             for action_dict in flow_dict['actions']:
@@ -107,26 +124,32 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         return flow
 
     def as_json(self, sort_keys=False, include_id=True):
-        """Return the representation of a flow in a json format.
+        """Return the representation of a flow in JSON format.
 
-        By default, Python doesn't sort keys. To properly calculate the ID,
-        sorting keys is required.
+        Args:
+            sort_keys (bool): ``False`` by default (Python's default). Sorting
+                is used, for example, to calculate the flow ID.
+            include_id (bool): ``True`` by default. Internally, the ID is not
+                included while calculating it.
 
         Returns:
-            string: Json string using flow attributes.
+            string: Flow JSON string representation.
 
         """
         return json.dumps(self.as_dict(include_id), sort_keys=sort_keys)
 
     def as_of_add_flow_mod(self):
+        """Return an OpenFlow add FlowMod."""
         return self._as_of_flow_mod(FlowModCommand.OFPFC_ADD)
 
     def as_of_delete_flow_mod(self):
+        """Return an OpenFlow delete FlowMod."""
         return self._as_of_flow_mod(FlowModCommand.OFPFC_DELETE)
 
     @abstractmethod
     def _as_of_flow_mod(self, command):
-        # Disable not-callable error as subclasses set a class
+        """Return a pyof FlowMod with given ``command``."""
+        # Disable not-callable error as subclasses will set a class
         flow_mod = self._flow_mod_class()  # pylint: disable=E1102
         flow_mod.match = self.match.as_of_match()
         flow_mod.cookie = self.cookie
@@ -139,11 +162,12 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     @staticmethod
     @abstractmethod
     def _get_of_actions(of_flow_stats):
+        """Return pyof actions from pyof FlowStats."""
         pass
 
     @classmethod
     def from_of_flow_stats(cls, of_flow_stats, switch):
-        """Create a flow with stats latest based on pyof FlowStats."""
+        """Create a flow with latest stats based on pyof FlowStats."""
         of_actions = cls._get_of_actions(of_flow_stats)
         actions = (cls._action_factory.from_of_action(of_action)
                    for of_action in of_actions)
@@ -159,12 +183,15 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
 
 
 class ActionBase(ABC):
+    """Base class for a flow action."""
 
     def as_dict(self):
+        """Return a dict that can be dumped as JSON."""
         return vars(self)
 
     @classmethod
     def from_dict(cls, action_dict):
+        """Return an action instance from attributes in a dictionary."""
         action = cls(None)
         for attr_name, value in action_dict.items():
             if hasattr(action, attr_name):
@@ -173,17 +200,18 @@ class ActionBase(ABC):
 
     @abstractmethod
     def as_of_action(self):
-        """Create OF action for a FlowMod."""
+        """Return a pyof action to be used by a FlowMod."""
         pass
 
     @classmethod
     @abstractmethod
     def from_of_action(cls, of_action):
+        """Return an action from a pyof action."""
         pass
 
 
 class ActionFactoryBase(ABC):
-    """FlowAction represents a action to be executed once a flow is actived."""
+    """Deal with different implementations of ActionBase."""
 
     # key: action_type or pyof class, value: ActionBase child
     _action_class = {
@@ -194,10 +222,10 @@ class ActionFactoryBase(ABC):
 
     @classmethod
     def from_dict(cls, action_dict):
-        """Build one of the Actions from a dictionary.
+        """Build the proper Action from a dictionary.
 
         Args:
-            action_dict (dict): Python dictionary to build a FlowAction.
+            action_dict (dict): Action attributes.
         """
         action_type = action_dict.get('action_type')
         action_class = cls._action_class[action_type]
@@ -206,6 +234,11 @@ class ActionFactoryBase(ABC):
 
     @classmethod
     def from_of_action(cls, of_action):
+        """Build the proper Action from a pyof action.
+
+        Args:
+            of_action (pyof action): Action from python-openflow.
+        """
         of_class = type(of_action).__class__
         action_class = cls._action_class.get(of_class)
         if action_class:
@@ -213,10 +246,12 @@ class ActionFactoryBase(ABC):
 
 
 class MatchBase:  # pylint: disable=too-many-instance-attributes
+    """Base class with common high-level Match fields."""
 
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
                  nw_dst=None, tp_src=None, tp_dst=None):
+        """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
         self.in_port = in_port
         self.dl_src = dl_src
@@ -231,12 +266,14 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.tp_dst = tp_dst
 
     def as_dict(self):
+        """Return a dictionary excluding ``None`` values."""
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
     @classmethod
-    def from_dict(cls, dict_content):
+    def from_dict(cls, match_dict):
+        """Return a Match instance from a dictionary."""
         match = cls()
-        for key, value in dict_content.items():
+        for key, value in match_dict.items():
             if key in match.__dict__:
                 setattr(match, key, value)
         return match
@@ -244,10 +281,12 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
     @classmethod
     @abstractmethod
     def from_of_match(cls, of_match):
+        """Return a Match instance from a pyof Match."""
         pass
 
     @abstractmethod
     def as_of_match(self):
+        """Return a python-openflow Match."""
         pass
 
 
@@ -255,28 +294,30 @@ class Stats:
     """Simple class to store statistics as attributes and values."""
 
     def as_dict(self):
-        """Exclude attributes with `None` values."""
+        """Return a dict excluding attributes with ``None`` value."""
         return {attribute: value
                 for attribute, value in vars(self).items()
                 if value is not None}
 
     @classmethod
     def from_dict(cls, stats_dict):
+        """Return a statistics object from a dictionary."""
         stats = cls()
         cls._update(stats, stats_dict.items())
         return stats
 
     @classmethod
     def from_of_flow_stats(cls, of_stats):
+        """Create an instance from a pyof FlowStats."""
         stats = cls()
         stats.update(of_stats)
         return stats
 
     def update(self, of_stats):
-        """Given a pyof stats object, update stats attributes' values.
+        """Given a pyof stats object, update attributes' values.
 
-        pyof values are GenericType instances whose native values can be
-        accessed by `.value`.
+        Avoid object creation and memory leak. pyof values are GenericType
+        instances whose native values can be accessed by `.value`.
         """
         # Generator for GenericType values
         attr_name_value = ((attr_name, gen_type.value)
@@ -295,6 +336,7 @@ class FlowStats(Stats):
     """Common fields for 1.0 and 1.3 FlowStats."""
 
     def __init__(self):
+        """Initialize all statistics as ``None``."""
         self.byte_count = None
         self.duration_sec = None
         self.duration_nsec = None
@@ -305,6 +347,7 @@ class PortStats(Stats):  # pylint: disable=too-many-instance-attributes
     """Common fields for 1.0 and 1.3 PortStats."""
 
     def __init__(self):
+        """Initialize all statistics as ``None``."""
         self.rx_packets = None
         self.tx_packets = None
         self.rx_bytes = None
