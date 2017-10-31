@@ -126,7 +126,6 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
                 setattr(flow, attr_name, attr_value)
 
         flow.switch = switch
-
         if 'stats' in flow_dict:
             flow.stats = FlowStats.from_dict(flow_dict['stats'])
 
@@ -259,7 +258,7 @@ class ActionFactoryBase(ABC):
         Args:
             of_action (pyof action): Action from python-openflow.
         """
-        of_class = type(of_action).__class__
+        of_class = type(of_action)
         action_class = cls._action_class.get(of_class)
         if action_class:
             return action_class.from_of_action(of_action)
