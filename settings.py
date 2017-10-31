@@ -1,6 +1,6 @@
 """Settings for the of_core NApp.."""
 #: Pooling frequency
-STATS_INTERVAL = 5
+STATS_INTERVAL = 60
 
 #: Supported Versions
 OPENFLOW_VERSIONS = [0x01, 0x04]
