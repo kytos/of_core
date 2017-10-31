@@ -21,7 +21,7 @@ class FlowFactory:  # pylint: disable=too-few-public-methods
         of_version = switch.connection.protocol.version
         for flow_class in FlowBase.__subclasses__():
             if flow_class.of_version == of_version:
-                return flow_class(of_flow_stats, switch)
+                return flow_class.from_of_flow_stats(of_flow_stats, switch)
 
 
 class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
