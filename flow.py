@@ -12,6 +12,17 @@ from hashlib import md5
 from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
 
+class FlowFactory:
+    """Choose the correct Flow according to OpenFlow version."""
+
+    @staticmethod
+    def from_of_flow_stats(of_flow_stats, switch):
+        of_version = switch.connection.protocol.version
+        for flow_class in FlowBase.__subclasses__():
+            if flow_class.of_version == of_version:
+                return flow_class(of_flow_stats, switch)
+
+
 class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     """Class to abstract a Flow to switches.
 
@@ -19,6 +30,9 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     switch. A flow, in this case is represented by a Match object and a set of
     actions that should occur in case any match happen.
     """
+
+    # of_version number: 0x01, 0x04
+    of_version = None
 
     # Subclasses must set their version-specific classes
     _action_factory = None

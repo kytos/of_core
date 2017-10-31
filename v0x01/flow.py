@@ -101,6 +101,8 @@ class Flow(FlowBase):
     This is a subclass that only deals with 1.0 flow actions.
     """
 
+    of_version = 0x01
+
     _action_factory = Action
     _flow_mod_class = FlowMod
     _match_class = Match
