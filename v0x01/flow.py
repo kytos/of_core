@@ -5,7 +5,10 @@ from pyof.v0x01.common.flow_match import Match as OFMatch
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
 
 from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
-                                      MatchBase)
+                                      FlowStats, MatchBase, PortStats)
+
+__all__ = ('ActionOutput', 'ActionSetVlan', 'Action', 'Flow', 'FlowStats',
+           'PortStats')
 
 
 class Match(MatchBase):

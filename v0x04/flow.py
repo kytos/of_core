@@ -11,8 +11,11 @@ from pyof.v0x04.common.flow_match import (OxmMatchFields, OxmOfbMatchField,
 from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
 from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
-                                      MatchBase)
+                                      FlowStats, MatchBase, PortStats)
 from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
+
+__all__ = ('ActionOutput', 'ActionSetVlan', 'Action', 'Flow', 'FlowStats',
+           'PortStats')
 
 
 class Match(MatchBase):

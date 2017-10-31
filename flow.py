@@ -119,7 +119,8 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
             flow.actions = []
             for action_dict in flow_dict['actions']:
                 action = cls._action_factory.from_dict(action_dict)
-                flow.actions.append(action)
+                if action:
+                    flow.actions.append(action)
 
         return flow
 
@@ -171,6 +172,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         of_actions = cls._get_of_actions(of_flow_stats)
         actions = (cls._action_factory.from_of_action(of_action)
                    for of_action in of_actions)
+        non_none_actions = [action for action in actions if action]
         return cls(switch,
                    table_id=of_flow_stats.table_id.value,
                    match=cls._match_class.from_of_match(of_flow_stats.match),
@@ -178,7 +180,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
                    idle_timeout=of_flow_stats.idle_timeout.value,
                    hard_timeout=of_flow_stats.hard_timeout.value,
                    cookie=of_flow_stats.cookie.value,
-                   actions=actions,
+                   actions=non_none_actions,
                    stats=FlowStats.from_of_flow_stats(of_flow_stats))
 
 
@@ -321,7 +323,8 @@ class Stats:
         """
         # Generator for GenericType values
         attr_name_value = ((attr_name, gen_type.value)
-                           for attr_name, gen_type in vars(of_stats).items())
+                           for attr_name, gen_type in vars(of_stats).items()
+                           if attr_name in vars(self))
         self._update(self, attr_name_value)
 
     @staticmethod
