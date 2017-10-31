@@ -34,7 +34,8 @@ from napps.kytos.of_core.utils import (emit_message_in, emit_message_out,
                                        GenericHello, NegotiationException,
                                        of_slicer)
 
-from napps.kytos.of_core.flow import FlowFactory
+from napps.kytos.of_core.v0x01.flow import Flow as Flow01
+from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 
 class Main(KytosNApp):
     """Main class of the NApp responsible for OpenFlow basic operations."""
@@ -78,7 +79,7 @@ class Main(KytosNApp):
         switch = event.source.switch
         msg = event.content['message']
         if msg.body_type == StatsTypes.OFPST_FLOW:
-            switch.flows = [FlowFactory.from_of_flow_stats(f, switch)
+            switch.flows = [Flow01.from_of_flow_stats(f, switch)
                             for f in msg.body]
         elif msg.body_type == StatsTypes.OFPST_DESC:
             switch.update_description(msg.body)
@@ -123,7 +124,8 @@ class Main(KytosNApp):
         if reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(switch, reply.body)
         elif reply.multipart_type == MultipartTypes.OFPMP_FLOW:
-            switch.flows = reply.body
+            switch.flows = [Flow04.from_of_flow_stats(f, switch)
+                            for f in reply.body]
         elif reply.multipart_type == MultipartTypes.OFPMP_DESC:
             switch.update_description(reply.body)
 
