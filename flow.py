@@ -11,17 +11,28 @@ from hashlib import md5
 # Note: FlowModCommand is the same in both v0x01 and v0x04
 from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
+import napps.kytos.of_core.v0x01 as v0x01
+import napps.kytos.of_core.v0x04 as v0x04
 
-class FlowFactory:  # pylint: disable=too-few-public-methods
+
+class FlowFactory(ABC):  # pylint: disable=too-few-public-methods
     """Choose the correct Flow according to OpenFlow version."""
 
-    @staticmethod
-    def from_of_flow_stats(of_flow_stats, switch):
+    @classmethod
+    def from_of_flow_stats(cls, of_flow_stats, switch):
         """Return a Flow for the switch OpenFlow version."""
+        flow_class = cls.get_class(switch)
+        return flow_class.from_of_flow_stats(of_flow_stats, switch)
+
+    @staticmethod
+    def get_class(switch):
+        """Return the Flow class for the switch OF version."""
         of_version = switch.connection.protocol.version
-        for flow_class in FlowBase.__subclasses__():
-            if flow_class.of_version == of_version:
-                return flow_class.from_of_flow_stats(of_flow_stats, switch)
+        if of_version == 0x01:
+            return v0x01.flow.Flow
+        elif of_version == 0x04:
+            return v0x04.flow.Flow
+        raise NotImplementedError(f'Unsupported OpenFlow version {of_version}')
 
 
 class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
