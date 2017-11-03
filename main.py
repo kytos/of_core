@@ -40,6 +40,11 @@ from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 class Main(KytosNApp):
     """Main class of the NApp responsible for OpenFlow basic operations."""
 
+    # Keep track of multiple multipart replies from our own request only.
+    # Assume that all replies are received before setting a new xid.
+    _multipart_replies_xids = {}
+    _multipart_replies_flows = {}
+
     def setup(self):
         """App initialization (used instead of ``__init__``).
 
@@ -59,13 +64,21 @@ class Main(KytosNApp):
         """
         for switch in self.controller.switches.values():
             if switch.is_connected():
-                version_utils = \
-                    self.of_core_version_utils[switch.
-                                               connection.protocol.version]
-                version_utils.update_flow_list(self.controller, switch)
+                self._request_flow_list(switch)
                 if settings.SEND_ECHO_REQUESTS:
+                    version_utils = \
+                        self.of_core_version_utils[switch.
+                                                   connection.protocol.version]
                     version_utils.send_echo(self.controller, switch)
 
+    def _request_flow_list(self, switch):
+        """Send flow stats request to a connected switch."""
+        of_version = switch.connection.protocol.version
+        if of_version == 0x01:
+            of_core_v0x01_utils.update_flow_list(self.controller, switch)
+        elif of_version == 0x04:
+            xid = of_core_v0x04_utils.update_flow_list(self.controller, switch)
+            self._multipart_replies_xids[switch.id] = xid
 
     @staticmethod
     @listen_to('kytos/of_core.v0x01.messages.in.ofpt_stats_reply')
@@ -106,10 +119,6 @@ class Main(KytosNApp):
                 version_utils.send_set_config(self.controller, switch)
             log.info('Connection %s, Switch %s: OPENFLOW HANDSHAKE COMPLETE',
                      connection.id, switch.dpid)
-            # # event to be generated in near future
-            # event_raw = KytosEvent(name='kytos/of_core.handshake_complete',
-            #                        content={'source': connection})
-            # self.controller.buffers.app.put(event_raw)
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
@@ -119,15 +128,41 @@ class Main(KytosNApp):
             event (:class:`~kytos.core.events.KytosEvent):
                 Event with ofpt_multipart_reply in message.
         """
-        switch = event.source.switch
         reply = event.content['message']
-        if reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
+        switch = event.source.switch
+
+        if reply.multipart_type == MultipartTypes.OFPMP_FLOW:
+            self._handle_multipart_flow_stats(reply, switch)
+        elif reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(switch, reply.body)
-        elif reply.multipart_type == MultipartTypes.OFPMP_FLOW:
-            switch.flows = [Flow04.from_of_flow_stats(f, switch)
-                            for f in reply.body]
         elif reply.multipart_type == MultipartTypes.OFPMP_DESC:
             switch.update_description(reply.body)
+
+    def _handle_multipart_flow_stats(self, reply, switch):
+        """Update switch flows after all replies are received."""
+        if self._is_multipart_reply_ours(reply, switch):
+            # Get all flows from the reply
+            flows = [Flow04.from_of_flow_stats(of_flow_stats, switch)
+                     for of_flow_stats in reply.body]
+            # Get existent flows from the same xid (or create an empty list)
+            all_flows = self._multipart_replies_flows.setdefault(switch.id, [])
+            all_flows.extend(flows)
+            if reply.flags.value % 2 == 0:  # Last bit means more replies
+                self._update_switch_flows(switch)
+
+    def _update_switch_flows(self, switch):
+        """Update controllers' switch flow list and clean resources."""
+        switch.flows = self._multipart_replies_flows[switch.id]
+        del self._multipart_replies_flows[switch.id]
+        del self._multipart_replies_xids[switch.id]
+
+    def _is_multipart_reply_ours(self, reply, switch):
+        """Return whether we are expecting the reply."""
+        if switch.id in self._multipart_replies_xids:
+            sent_xid = self._multipart_replies_xids[switch.id]
+            if sent_xid == reply.header.xid:
+                return True
+        return False
 
     @listen_to('kytos/core.openflow.raw.in')
     def handle_raw_in(self, event):

@@ -20,11 +20,16 @@ def update_flow_list(controller, switch):
             the controller being used.
         switch(:class:`~kytos.core.switch.Switch`):
             target to send a stats request.
+
+    Returns:
+        int: multipart request xid
+
     """
     multipart_request = MultipartRequest()
     multipart_request.multipart_type = MultipartTypes.OFPMP_FLOW
     multipart_request.body = FlowStatsRequest()
     emit_message_out(controller, switch.connection, multipart_request)
+    return multipart_request.header.xid
 
 
 def send_desc_request(controller, switch):
