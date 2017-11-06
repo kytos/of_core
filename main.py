@@ -428,13 +428,16 @@ class Main(KytosNApp):
                 }
 
         """
+        options = {'OFPPR_MODIFY': 'modified', 'OFPPR_DELETE': 'deleted'}
         reason = port_status.reason.enum_ref(port_status.reason.value).name
-        if reason not in ['DELETED', 'MODIFIED']:
+
+        if reason not in options.keys():
             return
 
-        interface = source.get_interface_by_port_no(port_status.desc.port_no)
+        port_number = port_status.desc.port_no.value
+        interface = source.switch.get_interface_by_port_no(port_number)
 
-        name = 'kytos/of_core.switch.interface.' + reason.lower()
+        name = 'kytos/of_core.switch.interface.' + options.get(reason)
         content = {'interface': interface}
 
         event = KytosEvent(name=name, content=content)
