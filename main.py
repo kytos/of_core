@@ -2,6 +2,7 @@
 from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.connection import ConnectionState
 from kytos.core.helpers import listen_to
+from kytos.core.switch import Interface
 
 from pyof.foundation.exceptions import UnpackException
 from pyof.foundation.network_types import Ethernet, EtherType
@@ -428,20 +429,41 @@ class Main(KytosNApp):
                 }
 
         """
-        options = {'OFPPR_MODIFY': 'modified', 'OFPPR_DELETE': 'deleted'}
         reason = port_status.reason.enum_ref(port_status.reason.value).name
+        port = port_status.desc
+        event_name = 'kytos/of_core.switch.interface.'
 
-        if reason not in options.keys():
-            return
+        if reason == 'OFPPR_ADD':
+            status = 'created'
+            interface = Interface(name=port.name.value,
+                                  address=port.hw_addr.value,
+                                  port_number=port.port_no.value,
+                                  switch=source.switch,
+                                  state=port.state.value,
+                                  features=port.curr)
+            source.switch.update_interface(interface)
 
-        port_number = port_status.desc.port_no.value
-        interface = source.switch.get_interface_by_port_no(port_number)
+        elif reason == 'OFPPR_MODIFY':
+            status = 'modified'
+            interface = Interface(name=port.name.value,
+                                  address=port.hw_addr.value,
+                                  port_number=port.port_no.value,
+                                  switch=source.switch,
+                                  state=port.state.value,
+                                  features=port.curr)
+            source.switch.update_interface(interface)
 
-        name = 'kytos/of_core.switch.interface.' + options.get(reason)
+        elif reason == 'OFPPR_DELETE':
+            status = 'deleted'
+            interface = source.switch.get_interface_by_port_no(
+                port.port_no.value)
+            source.switch.remove_interface(interface)
+
+        event_name += status
         content = {'interface': interface}
 
-        event = KytosEvent(name=name, content=content)
+        event = KytosEvent(name=event_name, content=content)
         self.controller.buffers.app.put(event)
 
         msg = 'The port %s (%s) from switch %s was %s.'
-        log.debug(msg, port_status.desc.port_no, source.id, reason)
+        log.debug(msg, port_status.desc.port_no, source.switch.id, status)
