@@ -401,7 +401,12 @@ class Main(KytosNApp):
         if ethernet.ether_type in (EtherType.LLDP, EtherType.IPV6):
             return
 
-        port = source.switch.get_interface_by_port_no(message.in_port.value)
+        try:
+            port = source.switch.get_interface_by_port_no(
+                message.in_port.value)
+        except AttributeError:
+            port = source.switch.get_interface_by_port_no(message.in_port)
+
         name = 'kytos/of_core.reachable.mac'
         content = {'switch': source.switch,
                    'port': port,
