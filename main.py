@@ -135,7 +135,8 @@ class Main(KytosNApp):
         if reply.multipart_type == MultipartTypes.OFPMP_FLOW:
             self._handle_multipart_flow_stats(reply, switch)
         elif reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
-            of_core_v0x04_utils.handle_port_desc(switch, reply.body)
+            of_core_v0x04_utils.handle_port_desc(self.controller, switch,
+                                                 reply.body)
         elif reply.multipart_type == MultipartTypes.OFPMP_DESC:
             switch.update_description(reply.body)
 

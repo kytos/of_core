@@ -1,4 +1,5 @@
 """Utilities module for of_core OpenFlow v0x04 operations"""
+from kytos.core.events import KytosEvent
 from kytos.core.switch import Interface
 
 from napps.kytos.of_core.utils import emit_message_out
@@ -75,7 +76,7 @@ def handle_features_reply(controller, event):
     return switch
 
 
-def handle_port_desc(switch, port_list):
+def handle_port_desc(controller, switch, port_list):
     """Update interfaces on switch based on port_list information."""
     for port in port_list:
         interface = Interface(name=port.name.value,
@@ -85,7 +86,17 @@ def handle_port_desc(switch, port_list):
                               state=port.state.value,
                               features=port.curr)
         switch.update_interface(interface)
-
+        port_event = KytosEvent(name='kytos/of_core.switch.port.created',
+                                content={
+                                    'switch': switch.id,
+                                    'port': port.port_no.value,
+                                    'port_description': {
+                                        'alias': port.name.value,
+                                        'mac': port.hw_addr.value,
+                                        'state': port.state.value
+                                        }
+                                    })
+        controller.buffers.app.put(port_event)
 
 def send_echo(controller, switch):
     """Send echo request to a datapath.
