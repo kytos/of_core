@@ -4,9 +4,9 @@ from kytos.core.switch import Interface
 
 from napps.kytos.of_core.utils import emit_message_out
 
-from pyof.v0x01.controller2switch.common import ConfigFlags, FlowStatsRequest
+from pyof.v0x01.controller2switch.common import ConfigFlag, FlowStatsRequest
 from pyof.v0x01.controller2switch.set_config import SetConfig
-from pyof.v0x01.controller2switch.stats_request import StatsRequest, StatsTypes
+from pyof.v0x01.controller2switch.stats_request import StatsRequest, StatsType
 from pyof.v0x01.symmetric.echo_request import EchoRequest
 from pyof.v0x01.symmetric.hello import Hello
 
@@ -22,7 +22,7 @@ def update_flow_list(controller, switch):
     """
     body = FlowStatsRequest()
     stats_request = StatsRequest(
-        body_type=StatsTypes.OFPST_FLOW,
+        body_type=StatsType.OFPST_FLOW,
         body=body)
     # req.pack()
     emit_message_out(controller, switch.connection, stats_request)
@@ -36,7 +36,7 @@ def send_desc_request(controller, switch):
         switch(:class:`~kytos.core.switch.Switch`):
             target to send a stats request.
     """
-    stats_request = StatsRequest(body_type=StatsTypes.OFPST_DESC)
+    stats_request = StatsRequest(body_type=StatsType.OFPST_DESC)
     emit_message_out(controller, switch.connection, stats_request)
 
 def handle_features_reply(controller, event):
@@ -91,7 +91,7 @@ def send_echo(controller, switch):
 def send_set_config(controller, switch):
     """Send a SetConfig message after the OpenFlow handshake."""
     set_config = SetConfig()
-    set_config.flags = ConfigFlags.OFPC_FRAG_NORMAL
+    set_config.flags = ConfigFlag.OFPC_FRAG_NORMAL
     set_config.miss_send_len = 0xffff #Send the whole packet
     emit_message_out (controller, switch.connection, set_config)
 

@@ -16,7 +16,7 @@ import pyof.v0x01.controller2switch.features_request
 import pyof.v0x01.controller2switch.stats_request
 import pyof.v0x01.symmetric.echo_reply
 
-from pyof.v0x01.controller2switch.common import StatsTypes
+from pyof.v0x01.controller2switch.common import StatsType
 
 import pyof.v0x04.asynchronous.error_msg
 import pyof.v0x04.common.header
@@ -25,7 +25,7 @@ import pyof.v0x04.controller2switch.common
 import pyof.v0x04.controller2switch.features_request
 import pyof.v0x04.symmetric.echo_reply
 
-from pyof.v0x04.controller2switch.common import MultipartTypes
+from pyof.v0x04.controller2switch.common import MultipartType
 
 from napps.kytos.of_core.v0x01 import utils as of_core_v0x01_utils
 from napps.kytos.of_core.v0x04 import utils as of_core_v0x04_utils
@@ -92,10 +92,10 @@ class Main(KytosNApp):
         """
         switch = event.source.switch
         msg = event.content['message']
-        if msg.body_type == StatsTypes.OFPST_FLOW:
+        if msg.body_type == StatsType.OFPST_FLOW:
             switch.flows = [Flow01.from_of_flow_stats(f, switch)
                             for f in msg.body]
-        elif msg.body_type == StatsTypes.OFPST_DESC:
+        elif msg.body_type == StatsType.OFPST_DESC:
             switch.update_description(msg.body)
 
     @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_features_reply')
@@ -132,12 +132,12 @@ class Main(KytosNApp):
         reply = event.content['message']
         switch = event.source.switch
 
-        if reply.multipart_type == MultipartTypes.OFPMP_FLOW:
+        if reply.multipart_type == MultipartType.OFPMP_FLOW:
             self._handle_multipart_flow_stats(reply, switch)
-        elif reply.multipart_type == MultipartTypes.OFPMP_PORT_DESC:
+        elif reply.multipart_type == MultipartType.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(self.controller, switch,
                                                  reply.body)
-        elif reply.multipart_type == MultipartTypes.OFPMP_DESC:
+        elif reply.multipart_type == MultipartType.OFPMP_DESC:
             switch.update_description(reply.body)
 
     def _handle_multipart_flow_stats(self, reply, switch):
