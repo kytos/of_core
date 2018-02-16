@@ -5,7 +5,7 @@ from kytos.core.switch import Interface
 from napps.kytos.of_core.utils import emit_message_out
 
 from pyof.v0x04.symmetric.echo_request import EchoRequest
-from pyof.v0x04.controller2switch.common import ConfigFlags, MultipartTypes
+from pyof.v0x04.controller2switch.common import ConfigFlag, MultipartType
 from pyof.v0x04.controller2switch.multipart_request import (FlowStatsRequest,
                                                             MultipartRequest)
 from pyof.v0x04.controller2switch.set_config import SetConfig
@@ -27,7 +27,7 @@ def update_flow_list(controller, switch):
 
     """
     multipart_request = MultipartRequest()
-    multipart_request.multipart_type = MultipartTypes.OFPMP_FLOW
+    multipart_request.multipart_type = MultipartType.OFPMP_FLOW
     multipart_request.body = FlowStatsRequest()
     emit_message_out(controller, switch.connection, multipart_request)
     return multipart_request.header.xid
@@ -43,13 +43,13 @@ def send_desc_request(controller, switch):
             target to send a stats request.
     """
     multipart_request = MultipartRequest()
-    multipart_request.multipart_type = MultipartTypes.OFPMP_DESC
+    multipart_request.multipart_type = MultipartType.OFPMP_DESC
     emit_message_out(controller, switch.connection, multipart_request)
 
 def send_port_request(controller, connection):
     """Send a Port Description Request after the Features Reply."""
     port_request = MultipartRequest()
-    port_request.multipart_type = MultipartTypes.OFPMP_PORT_DESC
+    port_request.multipart_type = MultipartType.OFPMP_PORT_DESC
     emit_message_out(controller, connection, port_request)
 
 
@@ -110,7 +110,7 @@ def send_echo(controller, switch):
 def send_set_config(controller, switch):
     """Send a SetConfig message after the OpenFlow handshake."""
     set_config = SetConfig()
-    set_config.flags = ConfigFlags.OFPC_FRAG_NORMAL
+    set_config.flags = ConfigFlag.OFPC_FRAG_NORMAL
     set_config.miss_send_len = ControllerMaxLen.OFPCML_NO_BUFFER
     emit_message_out(controller, switch.connection, set_config)
 
