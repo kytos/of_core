@@ -1,6 +1,6 @@
 """Utilities module for of_core OpenFlow v0x01 operations"""
 from kytos.core import KytosEvent
-from kytos.core.switch import Interface
+from kytos.core.interface import Interface
 
 from napps.kytos.of_core.utils import emit_message_out
 

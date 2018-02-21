@@ -2,7 +2,7 @@
 from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.connection import ConnectionState
 from kytos.core.helpers import listen_to
-from kytos.core.switch import Interface
+from kytos.core.interface import Interface
 
 from pyof.foundation.exceptions import UnpackException
 from pyof.foundation.network_types import Ethernet, EtherType
