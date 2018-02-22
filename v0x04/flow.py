@@ -1,8 +1,12 @@
 """Deal with OpenFlow 1.3 specificities related to flows."""
 from itertools import chain
 
+from pyof.foundation.network_types import EtherType
 from pyof.v0x04.common.action import ActionOutput as OFActionOutput
+from pyof.v0x04.common.action import ActionPopVLAN as OFActionPopVLAN
+from pyof.v0x04.common.action import ActionPush as OFActionPush
 from pyof.v0x04.common.action import ActionSetField as OFActionSetField
+from pyof.v0x04.common.action import ActionType
 from pyof.v0x04.common.flow_instructions import (InstructionApplyAction,
                                                  InstructionType)
 from pyof.v0x04.common.flow_match import Match as OFMatch
@@ -66,6 +70,47 @@ class ActionOutput(ActionBase):
         return OFActionOutput(port=self.port)
 
 
+class ActionPopVlan(ActionBase):
+    """Action to pop the outermost VLAN tag."""
+
+    def __init__(self, *args):
+        """Initialize the action with the correct action_type."""
+        self.action_type = 'pop_vlan'
+
+    @classmethod
+    def from_of_action(cls, of_action):
+        """Return a high-level ActionPopVlan instance from the pyof class."""
+        return cls()
+
+    def as_of_action(self):
+        """Return a pyof ActionPopVLAN instance."""
+        return OFActionPopVLAN()
+
+
+class ActionPushVlan(ActionBase):
+    """Action to push a VLAN tag."""
+
+    def __init__(self, tag_type):
+        """Require a tag_type for the VLAN."""
+        self.action_type = 'push_vlan'
+        self.tag_type = tag_type
+
+    @classmethod
+    def from_of_action(cls, of_action):
+        """Return a high level ActionPushVlan instance from pyof ActionPush."""
+        if of_action.ethertype.value == EtherType.VLAN_QINQ:
+            return cls(tag_type='s')
+        return cls(tag_type='c')
+
+    def as_of_action(self):
+        """Return a pyof ActionPush instance."""
+        if self.tag_type == 's':
+            return OFActionPush(action_type=ActionType.OFPAT_PUSH_VLAN,
+                                ethertype=EtherType.VLAN_QINQ)
+        return OFActionPush(action_type=ActionType.OFPAT_PUSH_VLAN,
+                            ethertype=EtherType.VLAN)
+
+
 class ActionSetVlan(ActionBase):
     """Action to set VLAN ID."""
 
@@ -100,8 +145,12 @@ class Action(ActionFactoryBase):
     _action_class = {
         'output': ActionOutput,
         'set_vlan': ActionSetVlan,
+        'push_vlan': ActionPushVlan,
+        'pop_vlan': ActionPopVlan,
         OFActionOutput: ActionOutput,
-        OFActionSetField: ActionSetVlan
+        OFActionSetField: ActionSetVlan,
+        OFActionPush: ActionPushVlan,
+        OFActionPopVLAN: ActionPopVlan
     }
 
 
