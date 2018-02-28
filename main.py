@@ -419,8 +419,33 @@ class Main(KytosNApp):
         log.debug(msg, ethernet.source, source.switch.id,
                   message.in_port)
 
+    def _send_specific_port_mod(self, port, interface):
+        """Dispatch port up/down/link_up/link_down events."""
+        event_name = 'kytos/of_core.switch.interface.'
+        event_content = {'interface': interface}
+
+        if port.config.value % 2:
+            status = 'down'
+        else:
+            status = 'up'
+
+        event = KytosEvent(name=event_name+status, content=event_content)
+        self.controller.buffers.app.put(event)
+
+        if port.state.value % 2:
+            status = 'link_down'
+        else:
+            status = 'link_up'
+
+        event = KytosEvent(name=event_name+status, content=event_content)
+        self.controller.buffers.app.put(event)
+
     def update_port_status(self, port_status, source):
-        """Dispatch 'port.[created|modified|deleted]' event.
+        """Dispatch 'port.*' events.
+
+        Current events:
+
+        created|deleted|up|down|link_up|link_down|modified
 
         Args:
             port_status: python openflow (pyof) PortStatus object.
@@ -459,6 +484,8 @@ class Main(KytosNApp):
                                   features=port.curr)
             source.switch.update_interface(interface)
 
+            self._send_specific_port_mod(port, interface)
+
         elif reason == 'OFPPR_DELETE':
             status = 'deleted'
             interface = source.switch.get_interface_by_port_no(
@@ -471,5 +498,5 @@ class Main(KytosNApp):
         event = KytosEvent(name=event_name, content=content)
         self.controller.buffers.app.put(event)
 
-        msg = 'The port %s (%s) from switch %s was %s.'
+        msg = 'The port %s from switch %s was %s.'
         log.debug(msg, port_status.desc.port_no, source.switch.id, status)
