@@ -120,6 +120,10 @@ class Main(KytosNApp):
                 version_utils.send_set_config(self.controller, switch)
             log.info('Connection %s, Switch %s: OPENFLOW HANDSHAKE COMPLETE',
                      connection.id, switch.dpid)
+            event_raw = KytosEvent(
+                name='kytos/of_core.handshake.completed',
+                content={'switch': switch})
+            self.controller.buffers.app.put(event_raw)
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
