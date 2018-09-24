@@ -59,8 +59,7 @@ class TestCoverage(SimpleCommand):
 
     def run(self):
         """Run unittest quietly and display coverage report."""
-        cmd = 'coverage3 run -m unittest discover -qs src' \
-              ' && coverage3 report'
+        cmd = 'coverage3 run -m unittest && coverage3 report'
         call(cmd, shell=True)
 
 
@@ -70,9 +69,9 @@ class Linter(SimpleCommand):
     description = 'lint Python source code'
 
     def run(self):
-        """Run pylama."""
-        print('Pylama is running. It may take several seconds...')
-        check_call('pylama setup.py tests kytos', shell=True)
+        """Run yala."""
+        print('Yala is running. It may take several seconds...')
+        check_call('yala *.py tests', shell=True)
 
 
 class CITest(SimpleCommand):
@@ -82,24 +81,28 @@ class CITest(SimpleCommand):
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        cmds = ['python setup.py ' + cmd
+        cmds = ['python3.6 setup.py ' + cmd
                 for cmd in ('coverage', 'lint')]
         cmd = ' && '.join(cmds)
         check_call(cmd, shell=True)
 
 
-setup(name='kytos/of_core',
+setup(name='kytos_of_core',
       version=read_version_from_json(),
       description='Core Napps developed by Kytos Team',
       url='http://github.com/kytos/of_core',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=[
-          'kytos-utils>=2017.2',
-          'kytos>=2017.2',
-          'python-openflow>=2017.2'
-      ],
+      install_requires=['setuptools >= 36.0.1'],
+      extras_require={
+          'dev': [
+              'coverage',
+              'pip-tools',
+              'yala',
+              'tox',
+          ],
+      },
       cmdclass={
           'clean': Cleaner,
           'ci': CITest,
