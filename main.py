@@ -468,6 +468,7 @@ class Main(KytosNApp):
         port = port_status.desc
         event_name = 'kytos/of_core.switch.interface.'
 
+        intf_attrs = ['address', 'port_number', 'switch', 'state', 'features']
         if reason == 'OFPPR_ADD':
             status = 'created'
             interface = Interface(name=port.name.value,
@@ -476,7 +477,7 @@ class Main(KytosNApp):
                                   switch=source.switch,
                                   state=port.state.value,
                                   features=port.curr)
-            source.switch.update_interface(interface)
+            source.switch.update_interface(interface, intf_attrs)
 
         elif reason == 'OFPPR_MODIFY':
             status = 'modified'
@@ -486,7 +487,7 @@ class Main(KytosNApp):
                                   switch=source.switch,
                                   state=port.state.value,
                                   features=port.curr)
-            source.switch.update_interface(interface)
+            source.switch.update_interface(interface, intf_attrs)
 
             self._send_specific_port_mod(port, interface)
 
