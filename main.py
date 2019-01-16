@@ -424,17 +424,18 @@ class Main(KytosNApp):
                   message.in_port)
 
     def _send_specific_port_mod(self, port, interface):
-        """Dispatch port up/down/link_up/link_down events."""
+        """Dispatch port link_up/link_down events."""
         event_name = 'kytos/of_core.switch.interface.'
         event_content = {'interface': interface}
 
-        if port.config.value % 2:
-            status = 'down'
-        else:
-            status = 'up'
+        # This should not be created because is a config state (operational)
+        # if port.config.value % 2:
+        #     status = 'down'
+        # else:
+        #     status = 'up'
 
-        event = KytosEvent(name=event_name+status, content=event_content)
-        self.controller.buffers.app.put(event)
+        # event = KytosEvent(name=event_name+status, content=event_content)
+        # self.controller.buffers.app.put(event)
 
         if port.state.value % 2:
             status = 'link_down'
@@ -449,7 +450,7 @@ class Main(KytosNApp):
 
         Current events:
 
-        created|deleted|up|down|link_up|link_down|modified
+        created|deleted|link_up|link_down|modified
 
         Args:
             port_status: python openflow (pyof) PortStatus object.
