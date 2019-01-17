@@ -164,6 +164,10 @@ class Flow(FlowBase):
     _flow_mod_class = FlowMod
     _match_class = Match
 
+    def __init__(self, *args, cookie_mask=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cookie_mask = cookie_mask
+
     @staticmethod
     def _get_of_actions(of_flow_stats):
         """Return the pyof actions from pyof ``FlowStats.instructions``."""
@@ -181,6 +185,7 @@ class Flow(FlowBase):
         Actions become items of the ``instructions`` attribute.
         """
         of_flow_mod = super()._as_of_flow_mod(command)
+        of_flow_mod.cookie_mask = self.cookie_mask
         of_actions = [action.as_of_action() for action in self.actions]
         of_instruction = InstructionApplyAction(actions=of_actions)
         of_flow_mod.instructions = [of_instruction]
