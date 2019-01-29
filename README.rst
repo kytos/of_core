@@ -4,10 +4,10 @@ Overview
 
 .. attention::
 
-    THIS NAPP IS STILL EXPERIMENTAL AND IT'S EVENTS, METHODS AND STRUCTURES MAY
-    CHANGE A LOT ON THE NEXT FEW DAYS/WEEKS, USE IT AT YOUR OWN DISCERNEMENT
+    THIS NAPP IS STILL EXPERIMENTAL AND ITS EVENTS, METHODS AND STRUCTURES MAY
+    CHANGE A LOT ON THE NEXT FEW DAYS/WEEKS. USE IT AT YOUR OWN DISCRETION.
 
-The NApp **kytos/of_core** is a NApp responsible to handle OpenFlow basic
+The NApp **kytos/of_core** is a NApp to handle all OpenFlow basic
 operations. The messages covered are:
 
 -  hello messages;
