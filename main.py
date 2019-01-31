@@ -17,6 +17,7 @@ import pyof.v0x01.controller2switch.stats_request
 import pyof.v0x01.symmetric.echo_reply
 
 from pyof.v0x01.controller2switch.common import StatsType
+from pyof.v0x01.common.header import Type
 
 import pyof.v0x04.asynchronous.error_msg
 import pyof.v0x04.common.header
@@ -219,6 +220,8 @@ class Main(KytosNApp):
 
             try:
                 message = connection.protocol.unpack(packet)
+                if message.header.message_type == Type.OFPT_ERROR:
+                    log.error(f"OFPT_ERROR: {str(message.code)}")
             except (UnpackException, AttributeError) as e:
                 log.debug(e)
                 if type(e) == AttributeError:
