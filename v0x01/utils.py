@@ -57,12 +57,19 @@ def handle_features_reply(controller, event):
                                              connection=connection)
 
     for port in features_reply.ports:
-        interface = Interface(name=port.name.value,
-                              address=port.hw_addr.value,
-                              port_number=port.port_no.value,
-                              switch=switch,
-                              state=port.state.value,
-                              features=port.curr)
+        interface = switch.get_interface_by_port_no(port.port_no.value)
+        if interface:
+            interface.name = port.name.value
+            interface.address = port.hw_addr.value
+            interface.state = port.state.value
+            interface.features = port.curr
+        else:
+            interface = Interface(name=port.name.value,
+                                  address=port.hw_addr.value,
+                                  port_number=port.port_no.value,
+                                  switch=switch,
+                                  state=port.state.value,
+                                  features=port.curr)
         switch.update_interface(interface)
         port_event = KytosEvent(name='kytos/of_core.switch.port.created',
                                 content={

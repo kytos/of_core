@@ -481,13 +481,22 @@ class Main(KytosNApp):
 
         elif reason == 'OFPPR_MODIFY':
             status = 'modified'
-            interface = Interface(name=port.name.value,
-                                  address=port.hw_addr.value,
-                                  port_number=port.port_no.value,
-                                  switch=source.switch,
-                                  state=port.state.value,
-                                  features=port.curr)
-            current_interface = source.switch.get_interface_by_port_no(port.port_no.value)
+            interface = source.switch.get_interface_by_port_no(port.port_no.value)
+            current_status = None
+            if interface:
+                log.info('Modified %s %s:%s' % (interface, interface.switch.dpid, interface.port_number))
+                current_status = interface.state 
+                interface.state = port.state.value
+                interface.name = port.name.value
+                interface.address = port.hw_addr.value
+                interface.features = port.curr
+            else:
+                interface = Interface(name=port.name.value,
+                                      address=port.hw_addr.value,
+                                      port_number=port.port_no.value,
+                                      switch=source.switch,
+                                      state=port.state.value,
+                                      features=port.curr)
             source.switch.update_interface(interface)
             self._send_specific_port_mod(port, interface, current_status)
 
