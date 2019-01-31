@@ -428,15 +428,6 @@ class Main(KytosNApp):
         event_name = 'kytos/of_core.switch.interface.'
         event_content = {'interface': interface}
 
-        # This should not be created because is a config state (operational)
-        # if port.config.value % 2:
-        #     status = 'down'
-        # else:
-        #     status = 'up'
-
-        # event = KytosEvent(name=event_name+status, content=event_content)
-        # self.controller.buffers.app.put(event)
-
         if port.state.value % 2:
             status = 'link_down'
         else:
