@@ -423,7 +423,7 @@ class Main(KytosNApp):
         log.debug(msg, ethernet.source, source.switch.id,
                   message.in_port)
 
-    def _send_specific_port_mod(self, port, interface, current_interface):
+    def _send_specific_port_mod(self, port, interface, current_state):
         """Dispatch port link_up/link_down events."""
         event_name = 'kytos/of_core.switch.interface.'
         event_content = {'interface': interface}
@@ -433,12 +433,12 @@ class Main(KytosNApp):
         else:
             status = 'link_up'
 
-        try:
-            if current_interface.state % 2:
+        if current_state:
+            if current_state % 2:
                 current_status = 'link_down'
             else:
                 current_status = 'link_up'
-        except AttributeError:
+        else:
             current_status = None
 
         if status != current_status:
@@ -489,8 +489,7 @@ class Main(KytosNApp):
                                   features=port.curr)
             current_interface = source.switch.get_interface_by_port_no(port.port_no.value)
             source.switch.update_interface(interface)
-
-            self._send_specific_port_mod(port, interface, current_interface)
+            self._send_specific_port_mod(port, interface, current_status)
 
         elif reason == 'OFPPR_DELETE':
             status = 'deleted'
