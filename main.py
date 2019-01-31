@@ -426,31 +426,22 @@ class Main(KytosNApp):
         log.debug(msg, ethernet.source, source.switch.id,
                   message.in_port)
 
-    def _send_specific_port_mod(self, port, interface, current_interface):
+    def _send_specific_port_mod(self, port, interface, current_state):
         """Dispatch port link_up/link_down events."""
         event_name = 'kytos/of_core.switch.interface.'
         event_content = {'interface': interface}
-
-        # This should not be created because is a config state (operational)
-        # if port.config.value % 2:
-        #     status = 'down'
-        # else:
-        #     status = 'up'
-
-        # event = KytosEvent(name=event_name+status, content=event_content)
-        # self.controller.buffers.app.put(event)
 
         if port.state.value % 2:
             status = 'link_down'
         else:
             status = 'link_up'
 
-        try:
-            if current_interface.state % 2:
+        if current_state:
+            if current_state % 2:
                 current_status = 'link_down'
             else:
                 current_status = 'link_up'
-        except AttributeError:
+        else:
             current_status = None
 
         if status != current_status:
@@ -493,16 +484,24 @@ class Main(KytosNApp):
 
         elif reason == 'OFPPR_MODIFY':
             status = 'modified'
-            interface = Interface(name=port.name.value,
-                                  address=port.hw_addr.value,
-                                  port_number=port.port_no.value,
-                                  switch=source.switch,
-                                  state=port.state.value,
-                                  features=port.curr)
-            current_interface = source.switch.get_interface_by_port_no(port.port_no.value)
+            interface = source.switch.get_interface_by_port_no(port.port_no.value)
+            current_status = None
+            if interface:
+                log.info('Modified %s %s:%s' % (interface, interface.switch.dpid, interface.port_number))
+                current_status = interface.state 
+                interface.state = port.state.value
+                interface.name = port.name.value
+                interface.address = port.hw_addr.value
+                interface.features = port.curr
+            else:
+                interface = Interface(name=port.name.value,
+                                      address=port.hw_addr.value,
+                                      port_number=port.port_no.value,
+                                      switch=source.switch,
+                                      state=port.state.value,
+                                      features=port.curr)
             source.switch.update_interface(interface)
-
-            self._send_specific_port_mod(port, interface, current_interface)
+            self._send_specific_port_mod(port, interface, current_status)
 
         elif reason == 'OFPPR_DELETE':
             status = 'deleted'
