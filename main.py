@@ -110,7 +110,11 @@ class Main(KytosNApp):
         """
         connection = event.source
         version_utils = self.of_core_version_utils[connection.protocol.version]
-        switch = version_utils.handle_features_reply(self.controller, event)
+        try:
+            switch = version_utils.handle_features_reply(self.controller, event)
+        except TypeError:
+            log.error('vlan_pool value is invalid or not found')
+            return None
 
         if (connection.is_during_setup() and
                 connection.protocol.state == 'waiting_features_reply'):
