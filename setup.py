@@ -10,7 +10,6 @@ import sys
 from abc import abstractmethod
 from pathlib import Path
 from subprocess import call, check_call
-from typing import Any, Union
 
 from setuptools import Command, setup
 from setuptools.command.develop import develop
@@ -34,8 +33,8 @@ ENABLED_PATH = VAR_PATH / 'napps'
 INSTALLED_PATH = VAR_PATH / 'napps' / '.installed'
 CURRENT_DIR = Path('.').resolve()
 
-## NApps enabled by default
-#CORE_NAPPS = ['of_core']
+# NApps enabled by default
+# CORE_NAPPS = ['of_core']
 
 
 class SimpleCommand(Command):
@@ -163,7 +162,7 @@ class DevelopMode(develop):
             shutil.rmtree(str(ENABLED_PATH), ignore_errors=True)
         else:
             self._create_folder_symlinks()
-            self._create_file_symlinks()
+            # self._create_file_symlinks()
             # KytosInstall.enable_core_napps()
 
     @staticmethod
@@ -177,18 +176,31 @@ class DevelopMode(develop):
         links.mkdir(parents=True, exist_ok=True)
         code = CURRENT_DIR
         src = links / 'of_core'
-        src.symlink_to(code)
+        symlink_if_different(src, code)
 
         (ENABLED_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
         dst = ENABLED_PATH / Path('kytos', 'of_core')
-        dst.symlink_to(src)
+        symlink_if_different(dst, src)
 
-    @staticmethod
-    def _create_file_symlinks():
-        """Symlink to required files."""
-        src: Path = ENABLED_PATH / '__init__.py'
-        dst: Path = CURRENT_DIR / 'napps' / '__init__.py'
-        src.symlink_to(dst)
+    # @staticmethod
+    # def _create_file_symlinks():
+    #     """Symlink to required files."""
+    #     src = ENABLED_PATH / '__init__.py'
+    #     dst = CURRENT_DIR / 'napps' / '__init__.py'
+    #     symlink_if_different(src, dst)
+
+
+def symlink_if_different(path, target):
+    """Force symlink creation if it points anywhere else."""
+    # print(f"symlinking {path} to target: {target}...", end=" ")
+    if not path.exists():
+        # print(f"path doesn't exist. linking...")
+        path.symlink_to(target)
+    elif not path.samefile(target):
+        # print(f"path exists, but is different. removing and linking...")
+        # Exists but points to a different file, so let's replace it
+        path.unlink()
+        path.symlink_to(target)
 
 
 def read_version_from_json():
@@ -221,7 +233,7 @@ setup(name='kytos_of_core',
           'develop': DevelopMode,
           'install': InstallMode,
           'lint': Linter,
-          #'egg_info': EggInfo,
+          # 'egg_info': EggInfo,
       },
       zip_safe=False,
       classifiers=[
