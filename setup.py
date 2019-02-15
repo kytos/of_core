@@ -209,6 +209,7 @@ def read_version_from_json():
     metadata = json.loads(file.read_text())
     return metadata['version']
 
+
 setup(name='kytos_of_core',
       version=read_version_from_json(),
       description='Core NApps developed by Kytos Team',
