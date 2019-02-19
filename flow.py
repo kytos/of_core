@@ -11,8 +11,7 @@ from hashlib import md5
 # Note: FlowModCommand is the same in both v0x01 and v0x04
 from pyof.v0x04.controller2switch.flow_mod import FlowModCommand
 
-import napps.kytos.of_core.v0x01 as v0x01
-import napps.kytos.of_core.v0x04 as v0x04
+from napps.kytos.of_core import v0x01, v0x04
 
 
 class FlowFactory(ABC):  # pylint: disable=too-few-public-methods
@@ -30,7 +29,7 @@ class FlowFactory(ABC):  # pylint: disable=too-few-public-methods
         of_version = switch.connection.protocol.version
         if of_version == 0x01:
             return v0x01.flow.Flow
-        elif of_version == 0x04:
+        if of_version == 0x04:
             return v0x04.flow.Flow
         raise NotImplementedError(f'Unsupported OpenFlow version {of_version}')
 
@@ -259,8 +258,7 @@ class ActionFactoryBase(ABC):
         """
         action_type = action_dict.get('action_type')
         action_class = cls._action_class[action_type]
-        if action_class:
-            return action_class.from_dict(action_dict)
+        return action_class.from_dict(action_dict) if action_class else None
 
     @classmethod
     def from_of_action(cls, of_action):
@@ -271,8 +269,7 @@ class ActionFactoryBase(ABC):
         """
         of_class = type(of_action)
         action_class = cls._action_class.get(of_class)
-        if action_class:
-            return action_class.from_of_action(of_action)
+        return action_class.from_of_action(of_action) if action_class else None
 
 
 class MatchBase:  # pylint: disable=too-many-instance-attributes

@@ -1,17 +1,16 @@
+"""of_core utility functions and classes."""
+
 import struct
-
-import pyof.v0x01 as pyof_01
-import pyof.v0x04 as pyof_04
-
 from collections import OrderedDict
-
-from kytos.core import KytosEvent, log
 
 from pyof.foundation.exceptions import PackException, UnpackException
 from pyof.v0x01.common.header import Type as OFPTYPE
 
+from kytos.core import KytosEvent
+
+
 def of_slicer(remaining_data):
-    """Slice a raw bytes into OpenFlow packets"""
+    """Slice a raw `bytes` instance into OpenFlow packets."""
     data_len = len(remaining_data)
     pkts = []
     while data_len > 3:
@@ -27,15 +26,14 @@ def of_slicer(remaining_data):
 
 def _unpack_int(packet, offset=0, size=None):
     if size is None:
-        if type(packet) == int:
+        if isinstance(packet, int):
             return packet
         size = len(packet)
     return int.from_bytes(packet[offset:offset + size], byteorder='big')
 
 
 def _emit_message(controller, connection, message, direction):
-    """Make controller emit a KytosEvent for an incoming/outgoing message
-    containing the message and the source."""
+    """Emit a KytosEvent for every incoming or outgoing message."""
     if direction == 'in':
         address_type = 'source'
         message_buffer = controller.buffers.msg_in
@@ -55,19 +53,18 @@ def _emit_message(controller, connection, message, direction):
 
 
 def emit_message_in(controller, connection, message):
-    """Make controller emit a KytosEvent for an incoming message
-    containing the message and the source."""
+    """Emit a KytosEvent for every incoming message."""
     _emit_message(controller, connection, message, 'in')
 
 
 def emit_message_out(controller, connection, message):
-    """Make controller emit a KytosEvent for an outgoing message
-    containing the message and the destination."""
+    """Emit a KytosEvent for every outgoing message."""
     _emit_message(controller, connection, message, 'out')
 
 
-class GenericHello():
-    """Version agnostic OpenFlow Hello Message"""
+class GenericHello:
+    """Version agnostic OpenFlow Hello Message."""
+
     header_sizes = OrderedDict(
         version=1,
         type=1,
@@ -79,20 +76,22 @@ class GenericHello():
 
     OFPHET_VERSIONBITMAP = 1
 
-    class generic_Header():
-        pass
+    class GenericHeader:
+        xid = None
+        type = None
+        length = None
 
     def __init__(self, *, packet=None, versions=None, xid=None):
-        """Initialize a GenericHello instance from a binary packet or from
-            initial versions and xid parameters.
+        """Initialize from a binary packet or from initial versions and xid.
 
-            Parameters:
-                packet: binary packet (bytes) to be unpacked and used to
-                        initialize the message
-                versions: list of versions used to build the version bitmap
-                xid: xid to be used in the message
+        Parameters:
+            packet: binary packet (bytes) to be unpacked and used to
+                    initialize the message
+            versions: list of versions used to build the version bitmap
+            xid: xid to be used in the message
+
         """
-        self.header = self.generic_Header()
+        self.header = self.GenericHeader()
         self.header.message_type = OFPTYPE.OFPT_HELLO
         if not any((packet, versions)):
             raise Exception('either packet or versions must be set.')
@@ -110,6 +109,7 @@ class GenericHello():
             self.header.xid = xid
 
     def pack(self):
+        """Encode OpenFlow packet."""
         versions = self.versions
         xid = self.header.xid
         packet_version = max(versions)
@@ -128,13 +128,14 @@ class GenericHello():
         return packet
 
     def unpack(self, packet):
+        """Decode OpenFlow packet."""
         offset = 0
         # self.header = self.generic_Header()
         for key, size in self.header_sizes.items():
             setattr(self.header, key, _unpack_int(packet, offset, size))
             offset += size
 
-        if (self.header.type != 0):
+        if self.header.type != 0:
             raise UnpackException
 
         elements = {}
@@ -172,7 +173,7 @@ class GenericHello():
 
 
 class NegotiationException(Exception):
-    """OF version negotiation failed Exception"""
+    """Exception raised when OpenFlow version negotiation failed."""
 
     def __str__(self):
         return "OF version negotiation failed: " + super().__str__()

@@ -1,42 +1,23 @@
 """NApp responsible for the main OpenFlow basic operations."""
+
+from pyof.foundation.exceptions import UnpackException
+from pyof.foundation.network_types import Ethernet, EtherType
+from pyof.utils import PYOF_VERSION_LIBS, unpack
+from pyof.v0x01.common.header import Type
+from pyof.v0x01.controller2switch.common import StatsType
+from pyof.v0x04.controller2switch.common import MultipartType
+
 from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.connection import ConnectionState
 from kytos.core.helpers import listen_to
 from kytos.core.interface import Interface
-
-from pyof.foundation.exceptions import UnpackException
-from pyof.foundation.network_types import Ethernet, EtherType
-from pyof.utils import unpack, PYOF_VERSION_LIBS
-
-import pyof.v0x01.asynchronous.error_msg
-import pyof.v0x01.common.header
-import pyof.v0x01.common.utils
-import pyof.v0x01.controller2switch.common
-import pyof.v0x01.controller2switch.features_request
-import pyof.v0x01.controller2switch.stats_request
-import pyof.v0x01.symmetric.echo_reply
-
-from pyof.v0x01.controller2switch.common import StatsType
-from pyof.v0x01.common.header import Type
-
-import pyof.v0x04.asynchronous.error_msg
-import pyof.v0x04.common.header
-import pyof.v0x04.common.utils
-import pyof.v0x04.controller2switch.common
-import pyof.v0x04.controller2switch.features_request
-import pyof.v0x04.symmetric.echo_reply
-
-from pyof.v0x04.controller2switch.common import MultipartType
-
-from napps.kytos.of_core.v0x01 import utils as of_core_v0x01_utils
-from napps.kytos.of_core.v0x04 import utils as of_core_v0x04_utils
-
 from napps.kytos.of_core import settings
-from napps.kytos.of_core.utils import (emit_message_in, emit_message_out,
-                                       GenericHello, NegotiationException,
+from napps.kytos.of_core.utils import (GenericHello, NegotiationException,
+                                       emit_message_in, emit_message_out,
                                        of_slicer)
-
+from napps.kytos.of_core.v0x01 import utils as of_core_v0x01_utils
 from napps.kytos.of_core.v0x01.flow import Flow as Flow01
+from napps.kytos.of_core.v0x04 import utils as of_core_v0x04_utils
 from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 
 
@@ -59,7 +40,7 @@ class Main(KytosNApp):
         self.execute_as_loop(settings.STATS_INTERVAL)
 
     def execute(self):
-        """Method to be runned once on app 'start' or in a loop.
+        """Run once on app 'start' or in a loop.
 
         The execute method is called by the run method of KytosNApp class.
         Users shouldn't call this method directly.
@@ -85,7 +66,7 @@ class Main(KytosNApp):
     @staticmethod
     @listen_to('kytos/of_core.v0x01.messages.in.ofpt_stats_reply')
     def handle_stats_reply(event):
-        """This method handles stats replies for v0x01 switches.
+        """Handle stats replies for v0x01 switches.
 
         Args:
             event (:class:`~kytos.core.events.KytosEvent):
@@ -128,7 +109,7 @@ class Main(KytosNApp):
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
-        """This method handles multipart replies for v0x04 switches.
+        """Handle multipart replies for v0x04 switches.
 
         Args:
             event (:class:`~kytos.core.events.KytosEvent):
@@ -178,7 +159,6 @@ class Main(KytosNApp):
         Args:
             event (KytosEvent): RawEvent with openflow message to be unpacked
         """
-
         # If the switch is already known to the controller, update the
         # 'lastseen' attribute
         switch = event.source.switch
@@ -204,8 +184,8 @@ class Main(KytosNApp):
                 try:
                     message = GenericHello(packet=packet)
                     self._negotiate(connection, message)
-                except (UnpackException, NegotiationException) as e:
-                    if type(e) == UnpackException:
+                except (UnpackException, NegotiationException) as err:
+                    if isinstance(err, UnpackException):
                         log.debug('Connection %s: Invalid hello message',
                                   connection.id)
                     else:
@@ -222,11 +202,11 @@ class Main(KytosNApp):
                 message = connection.protocol.unpack(packet)
                 if message.header.message_type == Type.OFPT_ERROR:
                     log.error(f"OFPT_ERROR: {str(message.code)}")
-            except (UnpackException, AttributeError) as e:
-                log.debug(e)
-                if type(e) == AttributeError:
+            except (UnpackException, AttributeError) as err:
+                log.debug(err)
+                if isinstance(err, AttributeError):
                     debug_msg = 'connection closed before version negotiation'
-                    log.debug('Connection %s: %s' , connection.id, debug_msg)
+                    log.debug('Connection %s: %s', connection.id, debug_msg)
                 connection.close()
                 return
 
@@ -249,18 +229,21 @@ class Main(KytosNApp):
                                     connection.remaining_data
 
     def emit_message_in(self, connection, message):
-        """Emit a KytosEvent for an incoming message containing the message
-        and the source."""
-        if connection.is_alive():
-            emit_message_in(self.controller, connection, message)
-            if message.header.message_type.name.lower() == 'ofpt_port_status':
-                self.update_port_status(message, connection)
-            elif message.header.message_type.name.lower() == 'ofpt_packet_in':
-                self.update_links(message, connection)
+        """Emit a KytosEvent for each incoming message.
+
+        Also update links and port status.
+        """
+        if not connection.is_alive():
+            return
+        emit_message_in(self.controller, connection, message)
+        msg_type = message.header.message_type.name.lower()
+        if msg_type == 'ofpt_port_status':
+            self.update_port_status(message, connection)
+        elif msg_type == 'ofpt_packet_in':
+            self.update_links(message, connection)
 
     def emit_message_out(self, connection, message):
-        """Emit a KytosEvent for an outgoing message containing the message
-        and the destination."""
+        """Emit a KytosEvent for each outgoing message."""
         if connection.is_alive():
             emit_message_out(self.controller, connection, message)
 
@@ -274,28 +257,14 @@ class Main(KytosNApp):
         Args:
             event (:class:`~kytos.core.events.KytosEvent`):
                 Event with echo request in message.
-        """
 
+        """
         pyof_lib = PYOF_VERSION_LIBS[event.source.protocol.version]
         echo_request = event.message
         echo_reply = pyof_lib.symmetric.echo_reply.EchoReply(
             xid=echo_request.header.xid,
             data=echo_request.data)
         self.emit_message_out(event.source, echo_reply)
-
-
-    def _get_version_from_bitmask(self, message_versions):
-        """Get common version from hello message version bitmap."""
-        try:
-            return max([version for version in message_versions
-                        if version in settings.OPENFLOW_VERSIONS])
-        except ValueError:
-            return None
-
-    def _get_version_from_header(self, message_version):
-        """Get common version from hello message header version."""
-        version = min(message_version, max(settings.OPENFLOW_VERSIONS))
-        return version if version in settings.OPENFLOW_VERSIONS else None
 
     def _negotiate(self, connection, message):
         """Handle hello messages.
@@ -305,12 +274,12 @@ class Main(KytosNApp):
 
         Parameters:
             event (KytosMessageInHello): KytosMessageInHelloEvent
-        """
 
+        """
         if message.versions:
-            version = self._get_version_from_bitmask(message.versions)
+            version = _get_version_from_bitmask(message.versions)
         else:
-            version = self._get_version_from_header(message.header.version)
+            version = _get_version_from_header(message.header.version)
 
         log.debug('connection %s: negotiated version - %s',
                   connection.id, str(version))
@@ -353,11 +322,10 @@ class Main(KytosNApp):
     # May be removed
     @listen_to('kytos/of_core.v0x0[14].messages.out.ofpt_echo_reply')
     def handle_queued_openflow_echo_reply(self, event):
-        """Method used to handle  echo reply messages.
+        """Handle queued OpenFlow echo reply messages.
 
-        This method will send a feature request message if the variable
-        SEND_FEATURES_REQUEST_ON_ECHO is True.By default this variable is
-        False.
+        Send a feature request message if SEND_FEATURES_REQUEST_ON_ECHO
+        is True (default is False).
         """
         if settings.SEND_FEATURES_REQUEST_ON_ECHO:
             self.send_features_request(event.destination)
@@ -370,11 +338,13 @@ class Main(KytosNApp):
             features_request.FeaturesRequest()
         self.emit_message_out(destination, features_request)
 
+    # pylint: disable=no-self-use
     @listen_to('kytos/of_core.v0x0[14].messages.out.ofpt_features_request')
     def handle_features_request_sent(self, event):
         """Ensure request has actually been sent before changing state."""
         if event.destination.protocol.state == 'sending_features':
             event.destination.protocol.state = 'waiting_features_reply'
+    # pylint: enable=no-self-use
 
     @staticmethod
     @listen_to('kytos/of_core.v0x[0-9a-f]{2}.messages.in.hello_failed',
@@ -470,13 +440,14 @@ class Main(KytosNApp):
         """
         reason = port_status.reason.enum_ref(port_status.reason.value).name
         port = port_status.desc
+        port_no = port.port_no.value
         event_name = 'kytos/of_core.switch.interface.'
 
         if reason == 'OFPPR_ADD':
             status = 'created'
             interface = Interface(name=port.name.value,
                                   address=port.hw_addr.value,
-                                  port_number=port.port_no.value,
+                                  port_number=port_no,
                                   switch=source.switch,
                                   state=port.state.value,
                                   features=port.curr)
@@ -484,11 +455,13 @@ class Main(KytosNApp):
 
         elif reason == 'OFPPR_MODIFY':
             status = 'modified'
-            interface = source.switch.get_interface_by_port_no(port.port_no.value)
+            interface = source.switch.get_interface_by_port_no(port_no)
             current_status = None
             if interface:
-                log.info('Modified %s %s:%s' % (interface, interface.switch.dpid, interface.port_number))
-                current_status = interface.state 
+                log.info('Modified %s %s:%s' %
+                         (interface, interface.switch.dpid,
+                          interface.port_number))
+                current_status = interface.state
                 interface.state = port.state.value
                 interface.name = port.name.value
                 interface.address = port.hw_addr.value
@@ -496,7 +469,7 @@ class Main(KytosNApp):
             else:
                 interface = Interface(name=port.name.value,
                                       address=port.hw_addr.value,
-                                      port_number=port.port_no.value,
+                                      port_number=port_no,
                                       switch=source.switch,
                                       state=port.state.value,
                                       features=port.curr)
@@ -505,8 +478,7 @@ class Main(KytosNApp):
 
         elif reason == 'OFPPR_DELETE':
             status = 'deleted'
-            interface = source.switch.get_interface_by_port_no(
-                port.port_no.value)
+            interface = source.switch.get_interface_by_port_no(port_no)
             source.switch.remove_interface(interface)
 
         event_name += status
@@ -517,3 +489,18 @@ class Main(KytosNApp):
 
         msg = 'The port %s from switch %s was %s.'
         log.debug(msg, port_status.desc.port_no, source.switch.id, status)
+
+
+def _get_version_from_bitmask(message_versions):
+    """Get common version from hello message version bitmap."""
+    try:
+        return max([version for version in message_versions
+                    if version in settings.OPENFLOW_VERSIONS])
+    except ValueError:
+        return None
+
+
+def _get_version_from_header(message_version):
+    """Get common version from hello message header version."""
+    version = min(message_version, max(settings.OPENFLOW_VERSIONS))
+    return version if version in settings.OPENFLOW_VERSIONS else None
