@@ -48,15 +48,11 @@ class SimpleCommand(Command):
 
         Use *call* instead of *check_call* to ignore failures.
         """
-        pass
-
     def initialize_options(self):
         """Set default values for options."""
-        pass
 
     def finalize_options(self):
         """Post-process options."""
-        pass
 
 
 class Cleaner(SimpleCommand):

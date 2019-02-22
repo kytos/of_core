@@ -191,7 +191,6 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     @abstractmethod
     def _get_of_actions(of_flow_stats):
         """Return pyof actions from pyof FlowStats."""
-        pass
 
     @classmethod
     def from_of_flow_stats(cls, of_flow_stats, switch):
@@ -230,13 +229,11 @@ class ActionBase(ABC):
     @abstractmethod
     def as_of_action(self):
         """Return a pyof action to be used by a FlowMod."""
-        pass
 
     @classmethod
     @abstractmethod
     def from_of_action(cls, of_action):
         """Return an action from a pyof action."""
-        pass
 
 
 class ActionFactoryBase(ABC):
@@ -309,12 +306,10 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
     @abstractmethod
     def from_of_match(cls, of_match):
         """Return a Match instance from a pyof Match."""
-        pass
 
     @abstractmethod
     def as_of_match(self):
         """Return a python-openflow Match."""
-        pass
 
 
 class Stats:

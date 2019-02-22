@@ -77,6 +77,8 @@ class GenericHello:
     OFPHET_VERSIONBITMAP = 1
 
     class GenericHeader:
+        """Generic header for the OpenFlow message."""
+
         xid = None
         type = None
         length = None

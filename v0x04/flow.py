@@ -73,12 +73,12 @@ class ActionOutput(ActionBase):
 class ActionPopVlan(ActionBase):
     """Action to pop the outermost VLAN tag."""
 
-    def __init__(self, *args):
+    def __init__(self):
         """Initialize the action with the correct action_type."""
         self.action_type = 'pop_vlan'
 
     @classmethod
-    def from_of_action(cls, of_action):
+    def from_of_action(cls):
         """Return a high-level ActionPopVlan instance from the pyof class."""
         return cls()
 
@@ -165,6 +165,7 @@ class Flow(FlowBase):
     _match_class = Match
 
     def __init__(self, *args, cookie_mask=0, **kwargs):
+        """Require a cookie mask."""
         super().__init__(*args, **kwargs)
         self.cookie_mask = cookie_mask
 
