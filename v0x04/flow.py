@@ -78,7 +78,7 @@ class ActionPopVlan(ActionBase):
         self.action_type = 'pop_vlan'
 
     @classmethod
-    def from_of_action(cls):
+    def from_of_action(cls, of_action):
         """Return a high-level ActionPopVlan instance from the pyof class."""
         return cls()
 
