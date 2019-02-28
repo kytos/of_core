@@ -13,7 +13,7 @@ from napps.kytos.of_core.utils import emit_message_out
 
 
 def update_flow_list(controller, switch):
-    """Responsible for request stats of flow to switches.
+    """Request stats of flow to switches.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
@@ -33,7 +33,7 @@ def update_flow_list(controller, switch):
 
 
 def send_desc_request(controller, switch):
-    """Responsible for request stats of flow to switches.
+    """Request stats of flow to switches.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
