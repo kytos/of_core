@@ -11,7 +11,7 @@ from napps.kytos.of_core.utils import emit_message_out
 
 
 def update_flow_list(controller, switch):
-    """Request stats of flow to switches.
+    """Request flow stats from switches.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
