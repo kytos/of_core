@@ -216,12 +216,13 @@ class Main(KytosNApp):
                       message.header.message_type,
                       message.header.xid)
 
-            if connection.is_during_setup():
-                if not (str(message.header.message_type) ==
-                        'Type.OFPT_FEATURES_REPLY' and
-                        connection.protocol.state == 'waiting_features_reply'):
-                    unprocessed_packets.append(packet)
-                    continue
+            waiting_features_reply = (
+                str(message.header.message_type) == 'Type.OFPT_FEATURES_REPLY'
+                and connection.protocol.state == 'waiting_features_reply')
+
+            if connection.is_during_setup() and not waiting_features_reply:
+                unprocessed_packets.append(packet)
+                continue
 
             self.emit_message_in(connection, message)
 

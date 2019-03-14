@@ -1,18 +1,17 @@
-"""Utilities module for of_core OpenFlow v0x01 operations"""
-from kytos.core import KytosEvent
-from kytos.core.interface import Interface
-
-from napps.kytos.of_core.utils import emit_message_out
-
+"""Utilities module for of_core OpenFlow v0x01 operations."""
 from pyof.v0x01.controller2switch.common import ConfigFlag, FlowStatsRequest
 from pyof.v0x01.controller2switch.set_config import SetConfig
 from pyof.v0x01.controller2switch.stats_request import StatsRequest, StatsType
 from pyof.v0x01.symmetric.echo_request import EchoRequest
 from pyof.v0x01.symmetric.hello import Hello
 
+from kytos.core import KytosEvent
+from kytos.core.interface import Interface
+from napps.kytos.of_core.utils import emit_message_out
+
 
 def update_flow_list(controller, switch):
-    """Method responsible for request stats of flow to switches.
+    """Request flow stats from switches.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
@@ -27,6 +26,7 @@ def update_flow_list(controller, switch):
     # req.pack()
     emit_message_out(controller, switch.connection, stats_request)
 
+
 def send_desc_request(controller, switch):
     """Send a description request to the switch.
 
@@ -39,16 +39,16 @@ def send_desc_request(controller, switch):
     stats_request = StatsRequest(body_type=StatsType.OFPST_DESC)
     emit_message_out(controller, switch.connection, stats_request)
 
+
 def handle_features_reply(controller, event):
     """Handle OF v0x01 features_reply message events.
 
     This is the end of the Handshake workflow of the OpenFlow Protocol.
-
     Parameters:
         controller (Controller): Controller being used.
         event (KytosEvent): Event with features reply message.
-    """
 
+    """
     connection = event.source
     features_reply = event.content['message']
     dpid = features_reply.datapath_id.value
@@ -84,8 +84,8 @@ def handle_features_reply(controller, event):
         controller.buffers.app.put(port_event)
 
     switch.update_features(features_reply)
-
     return switch
+
 
 def send_echo(controller, switch):
     """Send echo request to a datapath.
@@ -95,12 +95,14 @@ def send_echo(controller, switch):
     echo = EchoRequest(data=b'kytosd_10')
     emit_message_out(controller, switch.connection, echo)
 
+
 def send_set_config(controller, switch):
     """Send a SetConfig message after the OpenFlow handshake."""
     set_config = SetConfig()
     set_config.flags = ConfigFlag.OFPC_FRAG_NORMAL
-    set_config.miss_send_len = 0xffff #Send the whole packet
-    emit_message_out (controller, switch.connection, set_config)
+    set_config.miss_send_len = 0xffff       # Send the whole packet
+    emit_message_out(controller, switch.connection, set_config)
+
 
 def say_hello(controller, connection):
     """Send back a Hello packet with the same version as the switch."""

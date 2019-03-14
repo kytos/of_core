@@ -1,20 +1,19 @@
-"""Utilities module for of_core OpenFlow v0x04 operations"""
-from kytos.core.events import KytosEvent
-from kytos.core.interface import Interface
-
-from napps.kytos.of_core.utils import emit_message_out
-
-from pyof.v0x04.symmetric.echo_request import EchoRequest
+"""Utilities module for of_core OpenFlow v0x04 operations."""
+from pyof.v0x04.common.action import ControllerMaxLen
 from pyof.v0x04.controller2switch.common import ConfigFlag, MultipartType
 from pyof.v0x04.controller2switch.multipart_request import (FlowStatsRequest,
                                                             MultipartRequest)
 from pyof.v0x04.controller2switch.set_config import SetConfig
-from pyof.v0x04.common.action import ControllerMaxLen
+from pyof.v0x04.symmetric.echo_request import EchoRequest
 from pyof.v0x04.symmetric.hello import Hello
+
+from kytos.core.events import KytosEvent
+from kytos.core.interface import Interface
+from napps.kytos.of_core.utils import emit_message_out
 
 
 def update_flow_list(controller, switch):
-    """Method responsible for request stats of flow to switches.
+    """Request flow stats from switches.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
@@ -34,7 +33,7 @@ def update_flow_list(controller, switch):
 
 
 def send_desc_request(controller, switch):
-    """Method responsible for request stats of flow to switches.
+    """Request vendor-specific switch description.
 
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
@@ -45,6 +44,7 @@ def send_desc_request(controller, switch):
     multipart_request = MultipartRequest()
     multipart_request.multipart_type = MultipartType.OFPMP_DESC
     emit_message_out(controller, switch.connection, multipart_request)
+
 
 def send_port_request(controller, connection):
     """Send a Port Description Request after the Features Reply."""
@@ -61,8 +61,8 @@ def handle_features_reply(controller, event):
     Parameters:
         controller (Controller): Controller being used.
         event (KytosEvent): Event with features reply message.
-    """
 
+    """
     connection = event.source
     features_reply = event.content['message']
     dpid = features_reply.datapath_id.value
@@ -104,6 +104,7 @@ def handle_port_desc(controller, switch, port_list):
                                         }
                                     })
         controller.buffers.app.put(port_event)
+
 
 def send_echo(controller, switch):
     """Send echo request to a datapath.

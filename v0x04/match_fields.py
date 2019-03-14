@@ -37,7 +37,6 @@ class MatchField(ABC):
 
         It can be overriden just by a class attibute.
         """
-        pass
 
     @property
     @classmethod
@@ -47,18 +46,15 @@ class MatchField(ABC):
 
         It can be overriden just by as a class attibute.
         """
-        pass
 
     @abstractmethod
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        pass
 
     @classmethod
     @abstractmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        pass
 
     def __eq__(self, other):
         """Two objects are equal if their values are the same.
@@ -292,6 +288,7 @@ class MatchFieldFactory(ABC):
         field_class = cls._get_class(name)
         if field_class:
             return field_class(value)
+        return None
 
     @classmethod
     def from_of_tlv(cls, tlv):
@@ -299,6 +296,7 @@ class MatchFieldFactory(ABC):
         field_class = cls._get_class(tlv.oxm_field)
         if field_class:
             return field_class.from_of_tlv(tlv)
+        return None
 
     @classmethod
     def _get_class(cls, name_or_field):
