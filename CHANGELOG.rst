@@ -23,6 +23,39 @@ Fixed
 Security
 ========
 
+[1.3.0] - 2019-03-15
+********************************
+Added
+=====
+- Added scruntinizer files for tests.
+- Added log async error message.
+- Added cookie_mask field on v0x4 version of openflow.
+
+Changed
+=======
+- Updated Requirements and Dependecies of the Napp.
+- Updated READ-ME description.
+- Updated interface attributes.
+- Updated the way that the napp is instaled.
+
+Deprecated
+==========
+
+Removed
+=======
+- Removed unecessary events in the napp.
+- Removed unused dependency on the napp.
+- Removed operational status notification.
+
+Fixed
+=====
+- Fixed files to code execute.
+- Fixed lint.
+- Fixed interface events to change when the status is changed.
+
+Security
+========
+
 [1.2.0] - 2018-04-20
 ********************
 Added
