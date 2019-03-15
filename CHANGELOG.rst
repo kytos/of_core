@@ -25,26 +25,27 @@ Security
 
 [UNRELEASED] - Under development
 ********************************
+
 Added
 =====
 - Added log async error message.
-- Added cookie_mask field on v0x4 version of openflow.
+- Added cookie_mask field on v0x4 version of OpenFlow.
 
 Changed
 =======
-- Continuos integration enabled at scrutinizer
-- Updated Requirements and Dependecies of the Napp.
-- Updated READ-ME description.
+- Enabled continuous integration on Scrutinizer.
+- Updated requirements.
+- Updated README.
 - Updated interface attributes.
-- Updated the way that the napp is instaled.
+- Updated NApp is installation.
 
 Deprecated
 ==========
 
 Removed
 =======
-- Removed unecessary events in the napp.
-- Removed unused dependency on the napp.
+- Removed unnecessary events.
+- Removed unused dependencies.
 - Removed operational status notification.
 
 Fixed
@@ -55,6 +56,7 @@ Fixed
 
 Security
 ========
+
 
 [1.2.0] - 2018-04-20
 ********************
