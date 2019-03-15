@@ -23,12 +23,11 @@ Fixed
 Security
 ========
 
-[UNRELEASED] - Under development
-********************************
-
+[1.2.1] - 2019-03-15
+********************
 Added
 =====
-- Added log async error message.
+- Added OF_ERROR messages on log files
 - Added cookie_mask field on v0x4 version of OpenFlow.
 
 Changed
@@ -36,11 +35,9 @@ Changed
 - Enabled continuous integration on Scrutinizer.
 - Updated requirements.
 - Updated README.
-- Updated interface attributes.
-- Updated NApp is installation.
-
-Deprecated
-==========
+- Now, a new interface instance will only be created if the interface does not
+  exists
+- Updated NApp installation.
 
 Removed
 =======
@@ -50,13 +47,8 @@ Removed
 
 Fixed
 =====
-- Fixed files to code execute.
-- Fixed lint.
-- Fixed interface events to change when the status is changed.
-
-Security
-========
-
+- Fixed some linter errors.
+- Fixed interface up.down events, removing unnecessary events. Fix #33
 
 [1.2.0] - 2018-04-20
 ********************
