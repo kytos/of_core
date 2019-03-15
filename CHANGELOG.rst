@@ -23,6 +23,41 @@ Fixed
 Security
 ========
 
+[UNRELEASED] - Under development
+********************************
+
+Added
+=====
+- Added log async error message.
+- Added cookie_mask field on v0x4 version of OpenFlow.
+
+Changed
+=======
+- Enabled continuous integration on Scrutinizer.
+- Updated requirements.
+- Updated README.
+- Updated interface attributes.
+- Updated NApp is installation.
+
+Deprecated
+==========
+
+Removed
+=======
+- Removed unnecessary events.
+- Removed unused dependencies.
+- Removed operational status notification.
+
+Fixed
+=====
+- Fixed files to code execute.
+- Fixed lint.
+- Fixed interface events to change when the status is changed.
+
+Security
+========
+
+
 [1.2.0] - 2018-04-20
 ********************
 Added
