@@ -23,16 +23,16 @@ Fixed
 Security
 ========
 
-[1.3.0] - 2019-03-15
+[UNRELEASED] - Under development
 ********************************
 Added
 =====
-- Added scruntinizer files for tests.
 - Added log async error message.
 - Added cookie_mask field on v0x4 version of openflow.
 
 Changed
 =======
+- Continuos integration enabled at scrutinizer
 - Updated Requirements and Dependecies of the Napp.
 - Updated READ-ME description.
 - Updated interface attributes.
