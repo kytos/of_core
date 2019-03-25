@@ -73,7 +73,7 @@ class ActionOutput(ActionBase):
 class ActionPopVlan(ActionBase):
     """Action to pop the outermost VLAN tag."""
 
-    def __init__(self):
+    def __init__(self, *args):  # pylint: disable=unused-argument
         """Initialize the action with the correct action_type."""
         self.action_type = 'pop_vlan'
 
