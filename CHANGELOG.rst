@@ -23,6 +23,13 @@ Fixed
 Security
 ========
 
+[1.3] - 2019-04-26
+********************
+
+Fixed
+=======
+- Fixed broken API error on flow module.
+
 [1.2.1] - 2019-03-15
 ********************
 Added
