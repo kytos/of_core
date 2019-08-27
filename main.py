@@ -186,10 +186,10 @@ class Main(KytosNApp):
                     self._negotiate(connection, message)
                 except (UnpackException, NegotiationException) as err:
                     if isinstance(err, UnpackException):
-                        log.debug('Connection %s: Invalid hello message',
+                        log.error('Connection %s: Invalid hello message',
                                   connection.id)
                     else:
-                        log.debug('Connection %s: Negotiation Failed',
+                        log.error('Connection %s: Negotiation Failed',
                                   connection.id)
                     connection.protocol.state = 'hello_failed'
                     connection.close()
@@ -203,10 +203,10 @@ class Main(KytosNApp):
                 if message.header.message_type == Type.OFPT_ERROR:
                     log.error(f"OFPT_ERROR: {str(message.code)}")
             except (UnpackException, AttributeError) as err:
-                log.debug(err)
+                log.error(err)
                 if isinstance(err, AttributeError):
-                    debug_msg = 'connection closed before version negotiation'
-                    log.debug('Connection %s: %s', connection.id, debug_msg)
+                    error_msg = 'connection closed before version negotiation'
+                    log.error('Connection %s: %s', connection.id, debug_msg)
                 connection.close()
                 return
 
