@@ -23,8 +23,15 @@ Fixed
 Security
 ========
 
-[1.3] - 2019-04-26
+[1.3.1] - 2019-08-30
 ********************
+
+Changed
+=======
+- Changed log level of error messages from debug to error
+
+[1.3] - 2019-04-26
+******************
 
 Fixed
 =======
