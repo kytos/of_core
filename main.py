@@ -206,7 +206,7 @@ class Main(KytosNApp):
                 log.error(err)
                 if isinstance(err, AttributeError):
                     error_msg = 'connection closed before version negotiation'
-                    log.error('Connection %s: %s', connection.id, debug_msg)
+                    log.error('Connection %s: %s', connection.id, error_msg)
                 connection.close()
                 return
 
