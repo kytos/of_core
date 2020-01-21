@@ -97,7 +97,7 @@ class CITest(SimpleCommand):
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        cmds = ['python3.6 setup.py ' + cmd
+        cmds = ['python3.7 setup.py ' + cmd
                 for cmd in ('coverage', 'lint')]
         cmd = ' && '.join(cmds)
         check_call(cmd, shell=True)
@@ -237,6 +237,6 @@ setup(name='kytos_of_core',
       classifiers=[
           'License :: OSI Approved :: MIT License',
           'Operating System :: POSIX :: Linux',
-          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
           'Topic :: System :: Networking',
       ])

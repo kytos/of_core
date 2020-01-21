@@ -6,9 +6,12 @@ filter:
     paths: ['*']
 build:
     environment:
-        python: 3.6.0
+        python: 3.7.0
         postgresql: false
         redis: false
+    dependencies:
+        before:
+            - pip install coverage
     tests:
         override:
             -
@@ -17,3 +20,9 @@ build:
                     file: '.coverage'
                     config_file: '.coveragerc'
                     format: 'py-cc'
+    nodes:
+        analysis:
+            tests:
+                override:
+                    - py-scrutinizer-run
+        tests: true
