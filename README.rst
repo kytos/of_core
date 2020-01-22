@@ -2,6 +2,8 @@
 Overview
 ########
 
+|License| |Build| |Coverage| |Quality|
+
 .. attention::
 
     THIS NAPP IS STILL EXPERIMENTAL AND ITS EVENTS, METHODS AND STRUCTURES MAY
@@ -391,3 +393,15 @@ Content
     { 'message': <object>, # instance of a python-openflow FeaturesRequest message
       'destination': <object> # instance of kytos.core.switch.Connection class
     }
+
+.. |License| image:: https://img.shields.io/github/license/kytos/kytos.svg
+   :target: https://github.com/kytos/of_core/blob/master/LICENSE
+.. |Build| image:: https://scrutinizer-ci.com/g/kytos/of_core/badges/build.png?b=master
+  :alt: Build status
+  :target: https://scrutinizer-ci.com/g/kytos/of_core/?branch=master
+.. |Coverage| image:: https://scrutinizer-ci.com/g/kytos/of_core/badges/coverage.png?b=master
+  :alt: Code coverage
+  :target: https://scrutinizer-ci.com/g/kytos/of_core/?branch=master
+.. |Quality| image:: https://scrutinizer-ci.com/g/kytos/of_core/badges/quality-score.png?b=master
+  :alt: Code-quality score
+  :target: https://scrutinizer-ci.com/g/kytos/of_core/?branch=master
