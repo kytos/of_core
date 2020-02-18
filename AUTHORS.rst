@@ -1,6 +1,5 @@
-#######
 Authors
-#######
+*******
 
 - Beraldo Leal <beraldo AT ncc DOT unesp DOT br>
 - Artur Baruchi <abaruchi AT ncc DOT unesp DOT br>
@@ -10,3 +9,8 @@ Authors
 - Macártur de Sousa Carvalho <macartur.sc AT gmail DOT com>
 - Raphael Cóbe <rmcobe AT ncc DOT unesp DOT br>
 - Renan Rodrigo <renanrb AT ime DOT usp DOT br>
+
+Contributors
+============
+
+- Daniela Garcia Toranzo <dgarc330 AT fiu DOT edu>
