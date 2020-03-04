@@ -50,7 +50,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     _flow_mod_class = None
     _match_class = None
 
-    def __init__(self, switch, table_id=0xff, match=None, priority=0,
+    def __init__(self, switch, table_id=0xff, match=None, priority=0x8000,
                  idle_timeout=0, hard_timeout=0, cookie=0, actions=None,
                  stats=None):
         """Assign parameters to attributes.
