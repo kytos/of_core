@@ -10,6 +10,8 @@ Added
 
 Changed
 =======
+- Changed README.rst to include some info badges.
+- Changed default value for the flow priority.
 
 Deprecated
 ==========
@@ -19,6 +21,10 @@ Removed
 
 Fixed
 =====
+- Fixed code error changing debug_msg to error_msg.
+- Fixed Scrutinizer coverage error.
+- Fixed some linter issues.
+- Fixed __init__.py file in tests folder to solve bug when running tests.
 
 Security
 ========
@@ -28,7 +34,7 @@ Security
 
 Changed
 =======
-- Changed log level of error messages from debug to error
+- Changed log level of error messages from debug to error.
 
 [1.3.1] - 2019-04-26
 ******************
