@@ -29,9 +29,9 @@ Security
 
 Changed
 =======
-- Changed default value for the flow priority to 0x8000
+- Changed default value for the flow priority to ``0x8000``
   (215, the default was 0). Now it is a value in the
-  middle of range(0, 2**16).
+  middle of ``range(0, 2**16)``.
 - Changed README.rst to include some info badges.
 
 Fixed
