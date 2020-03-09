@@ -5,6 +5,7 @@ All notable changes to the of_core NApp will be documented in this file.
 
 [UNRELEASED] - Under development
 ********************************
+
 Added
 =====
 
@@ -23,12 +24,29 @@ Fixed
 Security
 ========
 
+[1.4.0] - 2020-03-09
+********************
+
+Changed
+=======
+- Changed default value for the flow priority to ``0x8000``
+  (215, the default was 0). Now it is a value in the
+  middle of ``range(0, 2**16)``.
+- Changed README.rst to include some info badges.
+
+Fixed
+=====
+- Fixed some error message log levels from DEBUG to ERROR.
+- Fixed Scrutinizer coverage error.
+- Fixed __init__.py file in tests folder to solve bug when running tests.
+
+
 [1.3.2] - 2019-12-20
 ********************
 
 Changed
 =======
-- Changed log level of error messages from debug to error
+- Changed log level of error messages from debug to error.
 
 [1.3.1] - 2019-04-26
 ******************
