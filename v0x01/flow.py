@@ -17,17 +17,17 @@ class Match(MatchBase):
     @classmethod
     def from_of_match(cls, of_match):
         """Return an instance from a pyof Match."""
-        match = cls(in_port=of_match.in_port.value,
+        match = cls(in_port=of_match.in_port,
                     dl_src=of_match.dl_src.value,
                     dl_dst=of_match.dl_dst.value,
-                    dl_vlan=of_match.dl_vlan.value,
-                    dl_vlan_pcp=of_match.dl_vlan_pcp.value,
-                    dl_type=of_match.dl_type.value,
-                    nw_proto=of_match.nw_proto.value,
+                    dl_vlan=of_match.dl_vlan,
+                    dl_vlan_pcp=of_match.dl_vlan_pcp,
+                    dl_type=of_match.dl_type,
+                    nw_proto=of_match.nw_proto,
                     nw_src=of_match.nw_src.value,
                     nw_dst=of_match.nw_dst.value,
-                    tp_src=of_match.tp_src.value,
-                    tp_dst=of_match.tp_dst.value)
+                    tp_src=of_match.tp_src,
+                    tp_dst=of_match.tp_dst)
         return match
 
     def as_of_match(self):
