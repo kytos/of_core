@@ -7,7 +7,7 @@ from pyof.v0x01.controller2switch.common import StatsType
 from kytos.core.connection import ConnectionState
 
 from tests.helpers import (get_controller_mock, get_kytos_event_mock,
-                           get_switch_mock, get_connection_mock)
+                           get_switch_mock, get_connection_mock, tags)
 
 
 # pylint: disable=protected-access
@@ -32,13 +32,13 @@ class TestMain(TestCase):
 
         self.napp = Main(get_controller_mock())
 
+    @tags(type='unit', size='small')
     @patch('napps.kytos.of_core.v0x04.utils.update_flow_list')
     @patch('napps.kytos.of_core.v0x01.utils.update_flow_list')
     def test_request_flow_list(self, *args):
         """Test request flow list."""
         (mock_update_flow_list_v0x01, mock_update_flow_list_v0x04) = args
         mock_update_flow_list_v0x04.return_value = "ABC"
-
         self.napp._request_flow_list(self.switch_v0x01)
         mock_update_flow_list_v0x01.assert_called_with(self.napp.controller,
                                                        self.switch_v0x01)
@@ -46,6 +46,7 @@ class TestMain(TestCase):
         mock_update_flow_list_v0x04.assert_called_with(self.napp.controller,
                                                        self.switch_v0x04)
 
+    @tags(type='unit', size='medium')
     @patch('napps.kytos.of_core.v0x01.flow.Flow.from_of_flow_stats')
     @patch('kytos.core.switch.Switch.update_description')
     def test_handle_stats_reply(self, *args):
@@ -70,6 +71,7 @@ class TestMain(TestCase):
         self.napp.handle_stats_reply(event)
         mock_update_description.assert_called_with(desc_msg.body)
 
+    @tags(type='unit', size='medium')
     @patch('kytos.core.switch.Switch.update_description')
     @patch('napps.kytos.of_core.main.Main._handle_multipart_flow_stats')
     @patch('napps.kytos.of_core.v0x04.utils.handle_port_desc')
@@ -105,6 +107,7 @@ class TestMain(TestCase):
         self.napp.handle_multipart_reply(event)
         mock_update_description.assert_called_with(ofpmp_desc.body)
 
+    @tags(type='unit', size='medium')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.v0x04.utils.send_set_config')
     @patch('napps.kytos.of_core.v0x01.utils.send_set_config')
@@ -148,6 +151,7 @@ class TestMain(TestCase):
         mock_set_established_state.assert_called()
         mock_buffers_put.assert_called()
 
+    @tags(type='unit', size='medium')
     @patch('napps.kytos.of_core.main.Main._update_switch_flows')
     @patch('napps.kytos.of_core.v0x04.flow.Flow.from_of_flow_stats')
     @patch('napps.kytos.of_core.main.Main._is_multipart_reply_ours')
