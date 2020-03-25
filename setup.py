@@ -35,6 +35,8 @@ CURRENT_DIR = Path('.').resolve()
 
 # NApps enabled by default
 # CORE_NAPPS = ['of_core']
+os.environ["KYTOS_TESTS_SIZE"] = 'small'
+os.environ["KYTOS_TESTS_TYPE"] = 'unit'
 
 
 class SimpleCommand(Command):
@@ -55,6 +57,23 @@ class SimpleCommand(Command):
         """Post-process options."""
 
 
+class TestCommand(SimpleCommand):
+    user_options = [
+        ('size=', None, 'Specify the size of tests to be executed.'),
+        ('type=', None, 'Specify the type of tests to be executed.'),
+    ]
+
+    def initialize_options(self):
+        self.size = 'small'
+        self.type = 'unit'
+
+    def finalize_options(self):
+        assert self.size in ('small', 'medium', 'large'), 'Invalid size.'
+        assert self.type in ('unit', 'integration', 'e2e'), 'Invalid type.'
+        os.environ["KYTOS_TESTS_SIZE"] = self.size
+        os.environ["KYTOS_TESTS_TYPE"] = self.type
+
+
 class Cleaner(SimpleCommand):
     """Custom clean command to tidy up the project root."""
 
@@ -67,7 +86,7 @@ class Cleaner(SimpleCommand):
         call('make -C docs/ clean', shell=True)
 
 
-class TestCoverage(SimpleCommand):
+class TestCoverage(TestCommand):
     """Display test coverage."""
 
     description = 'run unit tests and display code coverage'
@@ -90,16 +109,17 @@ class Linter(SimpleCommand):
                    shell=True)
 
 
-class CITest(SimpleCommand):
+class CITest(TestCommand):
     """Run all CI tests."""
 
     description = 'run all CI tests: unit and doc tests, linter'
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        cmds = ['python3.6 setup.py ' + cmd
-                for cmd in ('coverage', 'lint')]
-        cmd = ' && '.join(cmds)
+        args = '--size %s --type %s' % (self.size, self.type)
+        coverage_cmd = 'python3.6 setup.py coverage %s' % args
+        lint_cmd = 'python3.6 setup.py lint'
+        cmd = '%s && %s' % (coverage_cmd, lint_cmd)
         check_call(cmd, shell=True)
 
 
