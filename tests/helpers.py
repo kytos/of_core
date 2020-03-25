@@ -1,6 +1,5 @@
 """Module to help to create tests."""
 import os
-import sys
 from functools import wraps
 from unittest.mock import MagicMock, Mock
 
@@ -52,21 +51,22 @@ def get_kytos_event_mock(**kwargs):
                      'message': message}
     return event
 
+
+# pylint: disable=unused-argument
 def tags(*args, **kwargs):
     """Handle tokens from requests."""
-
     test_type = kwargs.get('type') or 'unit'
     test_size = kwargs.get('size') or 'small'
-    ENV_TEST_SIZE = os.environ.get("KYTOS_TESTS_SIZE")
-    ENV_TEST_TYPE = os.environ.get("KYTOS_TESTS_TYPE")
+    env_test_size = os.environ.get("KYTOS_TESTS_SIZE")
+    env_test_type = os.environ.get("KYTOS_TESTS_TYPE")
 
     def inner_func(func):
 
         @wraps(func)
-        def wrapper(*args, **kwargs):        
-            if test_type == ENV_TEST_TYPE and test_size == ENV_TEST_SIZE:
+        def wrapper(*args, **kwargs):
+            if test_type == env_test_type and test_size == env_test_size:
                 return func(*args, **kwargs)
-            
+            return None
         return wrapper
 
     return inner_func

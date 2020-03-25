@@ -57,17 +57,22 @@ class SimpleCommand(Command):
         """Post-process options."""
 
 
+# pylint: disable=attribute-defined-outside-init, abstract-method
 class TestCommand(SimpleCommand):
+    """Test tags decorators."""
+
     user_options = [
         ('size=', None, 'Specify the size of tests to be executed.'),
         ('type=', None, 'Specify the type of tests to be executed.'),
     ]
 
     def initialize_options(self):
+        """Set default size and type decorator tests."""
         self.size = 'small'
         self.type = 'unit'
 
     def finalize_options(self):
+        """Post-process."""
         assert self.size in ('small', 'medium', 'large'), 'Invalid size.'
         assert self.type in ('unit', 'integration', 'e2e'), 'Invalid type.'
         os.environ["KYTOS_TESTS_SIZE"] = self.size

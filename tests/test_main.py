@@ -2,12 +2,12 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from pyof.v0x04.controller2switch.common import MultipartType
 from pyof.v0x01.controller2switch.common import StatsType
-from kytos.core.connection import ConnectionState
+from pyof.v0x04.controller2switch.common import MultipartType
 
-from tests.helpers import (get_controller_mock, get_kytos_event_mock,
-                           get_switch_mock, get_connection_mock, tags)
+from kytos.core.connection import ConnectionState
+from tests.helpers import (get_connection_mock, get_controller_mock,
+                           get_kytos_event_mock, get_switch_mock, tags)
 
 
 # pylint: disable=protected-access
@@ -27,6 +27,7 @@ class TestMain(TestCase):
             0x04, get_switch_mock("00:00:00:00:00:00:00:04"))
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
+        # pylint: disable=bad-option-value
         from napps.kytos.of_core.main import Main
         self.addCleanup(patch.stopall)
 

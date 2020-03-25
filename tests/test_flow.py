@@ -2,7 +2,6 @@
 import unittest
 
 from kytos.core.switch import Switch
-
 from napps.kytos.of_core.v0x01.flow import Flow as Flow01
 from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 
