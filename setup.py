@@ -35,8 +35,6 @@ CURRENT_DIR = Path('.').resolve()
 
 # NApps enabled by default
 # CORE_NAPPS = ['of_core']
-os.environ["KYTOS_TESTS_SIZE"] = 'small'
-os.environ["KYTOS_TESTS_TYPE"] = 'unit'
 
 
 class SimpleCommand(Command):
@@ -110,8 +108,7 @@ class Linter(SimpleCommand):
     def run(self):
         """Run yala."""
         print('Yala is running. It may take several seconds...')
-        check_call('yala *.py v0x??/*.py tests/*.py tests/unit/*.py'
-                   ' tests/v0x??/*.py',
+        check_call('yala *.py',
                    shell=True)
 
 

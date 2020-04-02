@@ -57,8 +57,8 @@ def tags(*args, **kwargs):
     """Handle tokens from requests."""
     test_type = kwargs.get('type') or 'unit'
     test_size = kwargs.get('size') or 'small'
-    env_test_size = os.environ.get("KYTOS_TESTS_SIZE")
-    env_test_type = os.environ.get("KYTOS_TESTS_TYPE")
+    env_test_size = os.environ.get("KYTOS_TESTS_SIZE", 'small')
+    env_test_type = os.environ.get("KYTOS_TESTS_TYPE", 'unit')
 
     def inner_func(func):
 
