@@ -24,6 +24,29 @@ Fixed
 Security
 ========
 
+[1.4.1] - 2020-04-03
+********************
+
+Added
+=====
+- Added '.travis.yml' to enable Travis CI.
+- Added unit tests.
+
+Changed
+=======
+
+Deprecated
+==========
+
+Removed
+=======
+
+Fixed
+=====
+
+Security
+========
+
 [1.4.0] - 2020-03-09
 ********************
 
