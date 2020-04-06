@@ -53,10 +53,8 @@ def get_kytos_event_mock(**kwargs):
 
 
 # pylint: disable=unused-argument
-def tags(*args, **kwargs):
+def unit(size='small'):
     """Handle tokens from requests."""
-    test_type = kwargs.get('type') or 'unit'
-    test_size = kwargs.get('size') or 'small'
     env_test_size = os.environ.get("KYTOS_TESTS_SIZE", 'small')
     env_test_type = os.environ.get("KYTOS_TESTS_TYPE", 'unit')
 
@@ -64,7 +62,43 @@ def tags(*args, **kwargs):
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if test_type == env_test_type and test_size == env_test_size:
+            if env_test_type == 'unit' and size == env_test_size:
+                return func(*args, **kwargs)
+            return None
+        return wrapper
+
+    return inner_func
+
+
+# pylint: disable=unused-argument
+def integration(size='small'):
+    """Handle tokens from requests."""
+    env_test_size = os.environ.get("KYTOS_TESTS_SIZE", 'small')
+    env_test_type = os.environ.get("KYTOS_TESTS_TYPE", 'unit')
+
+    def inner_func(func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if env_test_type == 'integration' and size == env_test_size:
+                return func(*args, **kwargs)
+            return None
+        return wrapper
+
+    return inner_func
+
+
+# pylint: disable=unused-argument
+def e2e(size='small'):
+    """Handle tokens from requests."""
+    env_test_size = os.environ.get("KYTOS_TESTS_SIZE", 'small')
+    env_test_type = os.environ.get("KYTOS_TESTS_TYPE", 'unit')
+
+    def inner_func(func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if env_test_type == 'e2e' and size == env_test_size:
                 return func(*args, **kwargs)
             return None
         return wrapper

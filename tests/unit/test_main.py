@@ -8,7 +8,7 @@ from pyof.v0x04.controller2switch.common import MultipartType
 
 from kytos.core.connection import ConnectionState
 from tests.helpers import (get_connection_mock, get_controller_mock,
-                           get_kytos_event_mock, get_switch_mock, tags)
+                           get_kytos_event_mock, get_switch_mock, unit)
 
 
 # pylint: disable=protected-access
@@ -34,7 +34,7 @@ class TestMain(TestCase):
 
         self.napp = Main(get_controller_mock())
 
-    @tags(type='unit', size='small')
+    @unit('small')
     @patch('napps.kytos.of_core.v0x04.utils.update_flow_list')
     @patch('napps.kytos.of_core.v0x01.utils.update_flow_list')
     def test_request_flow_list(self, *args):
@@ -48,7 +48,7 @@ class TestMain(TestCase):
         mock_update_flow_list_v0x04.assert_called_with(self.napp.controller,
                                                        self.switch_v0x04)
 
-    @tags(type='unit', size='medium')
+    @unit('small')
     @patch('napps.kytos.of_core.v0x01.flow.Flow.from_of_flow_stats')
     @patch('kytos.core.switch.Switch.update_description')
     def test_handle_stats_reply(self, *args):
@@ -73,7 +73,7 @@ class TestMain(TestCase):
         self.napp.handle_stats_reply(event)
         mock_update_description.assert_called_with(desc_msg.body)
 
-    @tags(type='unit', size='medium')
+    @unit('small')
     @patch('kytos.core.switch.Switch.update_description')
     @patch('napps.kytos.of_core.main.Main._handle_multipart_flow_stats')
     @patch('napps.kytos.of_core.v0x04.utils.handle_port_desc')
@@ -109,7 +109,7 @@ class TestMain(TestCase):
         self.napp.handle_multipart_reply(event)
         mock_update_description.assert_called_with(ofpmp_desc.body)
 
-    @tags(type='unit', size='medium')
+    @unit('small')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.v0x04.utils.send_set_config')
     @patch('napps.kytos.of_core.v0x01.utils.send_set_config')
@@ -153,7 +153,7 @@ class TestMain(TestCase):
         mock_set_established_state.assert_called()
         mock_buffers_put.assert_called()
 
-    @tags(type='unit', size='medium')
+    @unit('small')
     @patch('napps.kytos.of_core.main.Main._update_switch_flows')
     @patch('napps.kytos.of_core.v0x04.flow.Flow.from_of_flow_stats')
     @patch('napps.kytos.of_core.main.Main._is_multipart_reply_ours')
@@ -177,6 +177,7 @@ class TestMain(TestCase):
                                                          self.switch_v0x04)
         mock_update_switch_flows.assert_called_with(self.switch_v0x04)
 
+    @unit('small')
     @patch('napps.kytos.of_core.main.Main.update_port_status')
     @patch('napps.kytos.of_core.main.Main.update_links')
     def test_emit_message_in(self, *args):
@@ -201,6 +202,7 @@ class TestMain(TestCase):
         mock_update_links.assert_called_with(msg_packet_in_mock,
                                              mock_packet_in_connection)
 
+    @unit('small')
     @patch('pyof.utils.v0x04.symmetric.echo_reply.EchoReply')
     @patch('napps.kytos.of_core.main.Main.emit_message_out')
     def test_handle_echo_request(self, *args):
@@ -218,6 +220,7 @@ class TestMain(TestCase):
                                            data=mock_echo_request.data)
         mock_emit_message_out.assert_called_with(mock_event.source, "A")
 
+    @unit('small')
     @patch('napps.kytos.of_core.main.Main.send_features_request')
     @patch('napps.kytos.of_core.v0x04.utils.say_hello')
     @patch('napps.kytos.of_core.main._get_version_from_bitmask')
@@ -237,6 +240,7 @@ class TestMain(TestCase):
                                           mock_connection)
         mock_features_request.assert_called_with(mock_connection)
 
+    @unit('small')
     @patch('pyof.utils.v0x04.asynchronous.error_msg.ErrorMsg')
     @patch('napps.kytos.of_core.main.Main.emit_message_out')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
@@ -253,6 +257,7 @@ class TestMain(TestCase):
         mock_emit_message_out.assert_called_with(mock_connection,
                                                  mock_error_msg.return_value)
 
+    @unit('small')
     @patch('napps.kytos.of_core.settings.SEND_FEATURES_REQUEST_ON_ECHO')
     @patch('napps.kytos.of_core.main.Main.send_features_request')
     def test_handle_queued_openflow_echo_reply(self, *args):
@@ -263,6 +268,7 @@ class TestMain(TestCase):
         self.napp.handle_queued_openflow_echo_reply(mock_event)
         mock_send_features_request.assert_called_with(mock_event.destination)
 
+    @unit('small')
     @patch('pyof.utils.v0x04.controller2switch.'
            'features_request.FeaturesRequest')
     @patch('napps.kytos.of_core.main.Main.emit_message_out')
@@ -276,6 +282,7 @@ class TestMain(TestCase):
         mock_features_request.assert_called()
         mock_emit_message_out.assert_called_with(mock_destination, "A")
 
+    @unit('small')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.main.Ethernet')
     def test_update_links(self, *args):
@@ -290,6 +297,7 @@ class TestMain(TestCase):
         mock_ethernet.assert_called()
         mock_buffer_put.assert_called()
 
+    @unit('small')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     def test_send_specific_port_mod(self, mock_buffer_put):
         """Test send specific port."""
@@ -300,6 +308,7 @@ class TestMain(TestCase):
                                           mock_interface, current_state)
         mock_buffer_put.assert_called()
 
+    @unit('small')
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.main.Interface')
     @patch('napps.kytos.of_core.main.Main._send_specific_port_mod')
