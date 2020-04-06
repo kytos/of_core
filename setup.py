@@ -71,8 +71,10 @@ class TestCommand(SimpleCommand):
 
     def finalize_options(self):
         """Post-process."""
-        assert self.size in ('small', 'medium', 'large'), 'Invalid size.'
-        assert self.type in ('unit', 'integration', 'e2e'), 'Invalid type.'
+        assert self.size in ('small', 'medium', 'large'), ('Invalid size:'
+                                                           f': {self.size}')
+        assert self.type in ('unit', 'integration', 'e2e'), ('Invalid type:'
+                                                             f': {self.type}')
         os.environ["KYTOS_TESTS_SIZE"] = self.size
         os.environ["KYTOS_TESTS_TYPE"] = self.type
 
