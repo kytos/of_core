@@ -1,11 +1,10 @@
 """Test Main methods."""
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, create_autospec
-
-from pyof.v0x01.controller2switch.common import StatsType
-from pyof.v0x04.controller2switch.common import MultipartType
+from unittest.mock import MagicMock, create_autospec, patch
 
 from pyof.foundation.network_types import Ethernet
+from pyof.v0x01.controller2switch.common import StatsType
+from pyof.v0x04.controller2switch.common import MultipartType
 
 from kytos.core.connection import ConnectionState
 from tests.helpers import (get_connection_mock, get_controller_mock,
