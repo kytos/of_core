@@ -1,14 +1,14 @@
 """Test Main methods."""
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, create_autospec
+from unittest.mock import MagicMock, create_autospec, patch
 
+from pyof.foundation.network_types import Ethernet
 from pyof.v0x01.controller2switch.common import StatsType
 from pyof.v0x04.controller2switch.common import MultipartType
-from pyof.foundation.network_types import Ethernet
 
 from kytos.core.connection import ConnectionState
-from tests.unit.helpers import (get_connection_mock, get_controller_mock,
-                                get_kytos_event_mock, get_switch_mock)
+from tests.helpers import (get_connection_mock, get_controller_mock,
+                           get_kytos_event_mock, get_switch_mock)
 
 
 # pylint: disable=protected-access
@@ -17,7 +17,6 @@ class TestMain(TestCase):
 
     def setUp(self):
         """Execute steps before each tests.
-
         Set the server_name_url from kytos/of_core
         """
         self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01")
@@ -28,6 +27,7 @@ class TestMain(TestCase):
             0x04, get_switch_mock("00:00:00:00:00:00:00:04"))
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
+        # pylint: disable=bad-option-value
         from napps.kytos.of_core.main import Main
         self.addCleanup(patch.stopall)
 
@@ -39,7 +39,6 @@ class TestMain(TestCase):
         """Test request flow list."""
         (mock_update_flow_list_v0x01, mock_update_flow_list_v0x04) = args
         mock_update_flow_list_v0x04.return_value = "ABC"
-
         self.napp._request_flow_list(self.switch_v0x01)
         mock_update_flow_list_v0x01.assert_called_with(self.napp.controller,
                                                        self.switch_v0x01)
