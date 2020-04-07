@@ -8,27 +8,6 @@ All notable changes to the of_core NApp will be documented in this file.
 
 Added
 =====
-
-Changed
-=======
-
-Deprecated
-==========
-
-Removed
-=======
-
-Fixed
-=====
-
-Security
-========
-
-[1.4.1] - 2020-04-03
-********************
-
-Added
-=====
 - Added '.travis.yml' to enable Travis CI.
 - Added unit tests.
 
@@ -46,6 +25,7 @@ Fixed
 
 Security
 ========
+
 
 [1.4.0] - 2020-03-09
 ********************
