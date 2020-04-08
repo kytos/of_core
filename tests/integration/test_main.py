@@ -1,6 +1,7 @@
 """Integration test main."""
 
 from unittest import TestCase
+from unittest.mock import patch
 
 from pyof.v0x01.controller2switch.features_reply import \
     FeaturesReply as FReply_v0x01
@@ -13,11 +14,10 @@ from pyof.v0x04.symmetric.echo_request import EchoRequest
 
 from kytos.core.connection import ConnectionState
 from kytos.core.events import KytosEvent
-from napps.kytos.of_core.main import Main
 from napps.kytos.of_core.utils import GenericHello
 
-from tests.integration.helpers import (get_controller_mock, get_interface_mock,
-                                       get_switch_mock)
+from tests.helpers import (get_connection_mock, get_controller_mock,
+                           get_interface_mock, get_switch_mock)
 
 
 class TestMain(TestCase):
@@ -25,12 +25,16 @@ class TestMain(TestCase):
 
     def setUp(self):
         """Execute steps before each tests.
-
         Set the server_name_url from kytos/of_core
         """
         self.server_name_url = 'http://localhost:8181/api/kytos/of_core'
-        self.controller = get_controller_mock()
-        self.napp = Main(self.controller)
+
+        patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
+        # pylint: disable=bad-option-value
+        from napps.kytos.of_core.main import Main
+        self.addCleanup(patch.stopall)
+
+        self.napp = Main(get_controller_mock())
         self.patched_events = []
 
     def test_get_event_listeners(self):
@@ -53,10 +57,15 @@ class TestMain(TestCase):
     def test_execute(self):
         """Test 'execute' main method."""
         dpid_01 = "00:00:00:00:00:00:00:01"
-        sw_01 = get_switch_mock(0x01, ConnectionState.ESTABLISHED, dpid_01)
-        self.napp.controller.get_switch_or_create(dpid_01, sw_01.connection)
         dpid_02 = "00:00:00:00:00:00:00:02"
-        sw_04 = get_switch_mock(0x04, ConnectionState.ESTABLISHED, dpid_02)
+        sw_01 = get_switch_mock()
+        sw_01.connection = get_connection_mock(
+            0x01, get_switch_mock(dpid_02), ConnectionState.ESTABLISHED)
+        sw_04 = get_switch_mock(dpid_02)
+        sw_04.connection = get_connection_mock(
+            0x04, get_switch_mock(dpid_01), ConnectionState.ESTABLISHED)
+
+        self.napp.controller.get_switch_or_create(dpid_01, sw_01.connection)
         self.napp.controller.get_switch_or_create(dpid_02, sw_04.connection)
         self.napp.execute()
         expected = [
@@ -72,9 +81,9 @@ class TestMain(TestCase):
     def test_handle_stats_reply(self):
         """Test handling stats reply message."""
         event_name = 'kytos/of_core.v0x01.messages.in.ofpt_stats_reply'
-        dpid = '00:00:00:00:00:00:00:02'
-        switch = get_switch_mock(0x01)
-        switch.connection.switch = get_switch_mock(0x01, dpid=dpid)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x01, get_switch_mock("00:00:00:00:00:00:00:02"))
 
         stats_data = b'\x01\x11\x00\x0c\x00\x00\x00\x01\x00\x01\x00\x01'
         stats_reply = StatsReply()
@@ -106,7 +115,10 @@ class TestMain(TestCase):
     def test_handle_04_features_reply(self):
         """Test handling features reply message."""
         event_name = 'kytos/of_core.v0x04.messages.in.ofpt_features_reply'
-        switch = get_switch_mock(0x04, ConnectionState.SETUP)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"),
+            ConnectionState.SETUP)
         switch.connection.protocol.state = 'waiting_features_reply'
 
         data = b'\x04\x06\x00\x20\x00\x00\x00\x00\x00\x00\x08\x60\x6e\x7f\x74'
@@ -121,8 +133,8 @@ class TestMain(TestCase):
                                     'message': features_reply})
         self.napp.handle_features_reply(event)
         target_switch = '00:00:08:60:6e:7f:74:e7'
-        of_event_01 = self.controller.buffers.app.get()
-        of_event_02 = self.controller.buffers.app.get()
+        of_event_01 = self.napp.controller.buffers.app.get()
+        of_event_02 = self.napp.controller.buffers.app.get()
         self.assertEqual("kytos/core.switch.new", of_event_01.name)
         self.assertEqual(target_switch, of_event_01.content["switch"].dpid)
         self.assertEqual("kytos/of_core.handshake.completed", of_event_02.name)
@@ -139,7 +151,10 @@ class TestMain(TestCase):
     def test_handle_01_features_reply(self):
         """Test handling features reply message."""
         event_name = 'kytos/of_core.v0x01.messages.in.ofpt_features_reply'
-        switch = get_switch_mock(0x01, ConnectionState.SETUP)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x01, get_switch_mock("00:00:00:00:00:00:00:02"),
+            ConnectionState.SETUP)
         switch.connection.protocol.state = 'waiting_features_reply'
 
         data = b'\x01\x06\x00\x80\x00\x00\x00\x00\x00\x00\x00\xff\x12\x34\x56'
@@ -170,7 +185,9 @@ class TestMain(TestCase):
     def test_handle_features_request_sent(self):
         """Test handling features request sent message."""
         event_name = 'kytos/of_core.v0x01.messages.out.ofpt_features_request'
-        switch = get_switch_mock(0x01)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x01, get_switch_mock("00:00:00:00:00:00:00:02"))
         switch.connection.protocol.state = 'sending_features'
 
         data = b'\x04\x05\x00\x08\x00\x00\x00\x03'
@@ -187,7 +204,9 @@ class TestMain(TestCase):
     def test_handle_echo_request(self):
         """Test handling echo request message."""
         event_name = 'kytos/of_core.v0x04.messages.in.ofpt_echo_request'
-        switch = get_switch_mock(0x04)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"))
 
         data = b'\x04\x02\x00\x0c\x00\x00\x00\x00\x68\x6f\x67\x65'
         echo_request = EchoRequest()
@@ -204,7 +223,9 @@ class TestMain(TestCase):
     def test_handle_hello_raw_in(self):
         """Test handling hello raw in message."""
         event_name = 'kytos/core.openflow.raw.in'
-        switch = get_switch_mock(0x04)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"))
 
         data = b'\x04\x00\x00\x10\x00\x00\x00\x3e'
         data += b'\x00\x01\x00\x08\x00\x00\x00\x10'
@@ -213,15 +234,9 @@ class TestMain(TestCase):
                                     'new_data': data})
         self.napp.handle_raw_in(event)
 
-        data_exc = b'\x00\x00\x00\x08\xb8\xd1\xb1\x0c'
-        event = KytosEvent(name=event_name,
-                           content={'source': switch.connection,
-                                    'new_data': data_exc})
-        self.napp.handle_raw_in(event)
         expected = [
             'kytos/of_core.v0x04.messages.out.ofpt_hello',
-            'kytos/of_core.v0x04.messages.out.ofpt_features_request',
-            'kytos/of_core.v0x04.messages.out.ofpt_error'
+            'kytos/of_core.v0x04.messages.out.ofpt_features_request'
         ]
         for message in expected:
             of_event = self.napp.controller.buffers.msg_out.get()
@@ -230,8 +245,10 @@ class TestMain(TestCase):
     def test_handle_port_status_raw_in(self):
         """Test handling port_status raw in message."""
         event_name = 'kytos/core.openflow.raw.in'
-        switch = get_switch_mock(0x04, ConnectionState.ESTABLISHED)
-        switch.connection.switch = get_switch_mock(0x04)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"),
+            ConnectionState.ESTABLISHED)
 
         data = b'\x04\x0c\x00\x50\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00'
         data += b'\x00\x00\x00\x00\x01\x00\x00\x00\x00\x62\x43\xe5\xdb\x35\x0a'
@@ -251,8 +268,10 @@ class TestMain(TestCase):
     def test_handle_packet_in_raw_in(self):
         """Test handling packet_in raw in message."""
         event_name = 'kytos/core.openflow.raw.in'
-        switch = get_switch_mock(0x04, ConnectionState.ESTABLISHED)
-        switch.connection.switch = get_switch_mock(0x04)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"),
+            ConnectionState.ESTABLISHED)
 
         data = b'\x04\x0a\x00\x94\x00\x00\x00\x00\x00\x00\x00\x02\x00\x2a\x01'
         data += b'\x01\x00\x01\x02\x03\x00\x00\x00\x00\x00\x01\x00\x50\x80\x00'
@@ -276,8 +295,11 @@ class TestMain(TestCase):
     def test_handle_multipart_reply(self):
         """Test handling ofpt_multipart_reply."""
         event_name = 'kytos/of_core.v0x04.messages.in.ofpt_multipart_reply'
-        switch = get_switch_mock(0x04, dpid='00:00:00:00:00:00:00:02')
-        switch.connection.switch = get_switch_mock(0x04)
+        switch = get_switch_mock("00:00:00:00:00:00:00:02")
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:01"),
+            ConnectionState.ESTABLISHED)
+
         self.napp.controller.get_switch_or_create(switch.dpid,
                                                   switch.connection)
 
@@ -329,9 +351,10 @@ class TestMain(TestCase):
     def test_handle_port_desc_multipart_reply(self):
         """Test handling to ofpt_PORT_DESC."""
         event_name = 'kytos/of_core.v0x04.messages.in.ofpt_multipart_reply'
-        dpid = '00:00:00:00:00:00:00:02'
-        switch = get_switch_mock(0x04)
-        switch.connection.switch = get_switch_mock(0x04, dpid=dpid)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"))
+
         data = b'\x04\x13\x00\x90\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00'
         data += b'\x00\x00\x00\x00\x07\x00\x00\x00\x00\xf2\x0b\xa4\xd0\x3f\x70'
         data += b'\x00\x00\x50\x6f\x72\x74\x37\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -355,8 +378,9 @@ class TestMain(TestCase):
         self.napp.handle_multipart_reply(stats_event)
 
         # Send port_desc pack without interface
-        switch = get_switch_mock(0x04)
-        switch.connection.switch = get_switch_mock(0x04, dpid=dpid)
+        switch = get_switch_mock()
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"))
         stats_event = KytosEvent(name=event_name,
                                  content={'source': switch.connection,
                                           'message': port_desc})

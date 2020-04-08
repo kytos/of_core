@@ -1,9 +1,10 @@
 """Module to help to create tests."""
 from unittest.mock import MagicMock, Mock
 
+from pyof.utils import unpack
 from kytos.core import Controller
 from kytos.core.config import KytosConfig
-from kytos.core.connection import Connection
+from kytos.core.connection import Connection, ConnectionState
 from kytos.core.interface import Interface
 from kytos.core.switch import Switch
 
@@ -24,16 +25,18 @@ def get_interface_mock(interface_name, port, *args, **kwargs):
     return iface
 
 
-def get_switch_mock(dpid):
+def get_switch_mock(dpid="00:00:00:00:00:00:00:01"):
     """Return a switch mock."""
     return Switch(dpid)
 
 
-def get_connection_mock(of_version, target_switch):
+def get_connection_mock(of_version, target_switch, state=ConnectionState.NEW):
     """Return a connection mock."""
     connection = Connection(Mock(), Mock(), Mock())
     connection.switch = target_switch
+    connection.state = state
     connection.protocol.version = of_version
+    connection.protocol.unpack = unpack
     return connection
 
 
