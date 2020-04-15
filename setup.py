@@ -74,7 +74,9 @@ class TestCoverage(SimpleCommand):
 
     def run(self):
         """Run unittest quietly and display coverage report."""
-        cmd = 'coverage3 run -m unittest && coverage3 report'
+        # temporarily disabling running integration tests
+        cmd = ('coverage3 run -m unittest discover -s tests/unit'
+               ' && coverage3 report')
         call(cmd, shell=True)
 
 
