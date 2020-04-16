@@ -8,8 +8,8 @@ All notable changes to the of_core NApp will be documented in this file.
 
 Added
 =====
+- Added new unit tests, increasing coverage to 47%.
 - Added '.travis.yml' to enable Travis CI.
-- Added unit tests.
 
 Changed
 =======
