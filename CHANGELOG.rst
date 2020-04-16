@@ -8,6 +8,8 @@ All notable changes to the of_core NApp will be documented in this file.
 
 Added
 =====
+- Added new unit tests, increasing coverage to 47%.
+- Added '.travis.yml' to enable Travis CI.
 
 Changed
 =======
@@ -23,6 +25,7 @@ Fixed
 
 Security
 ========
+
 
 [1.4.0] - 2020-03-09
 ********************
