@@ -10,7 +10,7 @@ Added
 =====
 - Added new unit tests, increasing coverage to 47%.
 - Added '.travis.yml' to enable Travis CI.
-
+- Added tags decorator to run tests by type and size.
 Changed
 =======
 
