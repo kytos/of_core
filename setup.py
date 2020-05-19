@@ -9,7 +9,7 @@ import shutil
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from subprocess import call, check_call
+from subprocess import CalledProcessError, call, check_call
 
 from setuptools import Command, setup
 from setuptools.command.develop import develop
@@ -20,11 +20,7 @@ if 'bdist_wheel' in sys.argv:
     raise RuntimeError("This setup.py does not support wheels")
 
 # Paths setup with virtualenv detection
-if 'VIRTUAL_ENV' in os.environ:
-    BASE_ENV = Path(os.environ['VIRTUAL_ENV'])
-else:
-    BASE_ENV = Path('/')
-
+BASE_ENV = Path(os.environ.get('VIRTUAL_ENV', '/'))
 # Kytos var folder
 VAR_PATH = BASE_ENV / 'var' / 'lib' / 'kytos'
 # Path for enabled NApps
@@ -55,6 +51,39 @@ class SimpleCommand(Command):
         """Post-process options."""
 
 
+# pylint: disable=attribute-defined-outside-init, abstract-method
+class TestCommand(Command):
+    """Test tags decorators."""
+
+    user_options = [
+        ('size=', None, 'Specify the size of tests to be executed.'),
+        ('type=', None, 'Specify the type of tests to be executed.'),
+    ]
+
+    sizes = ('small', 'medium', 'large', 'all')
+    types = ('unit', 'integration', 'e2e')
+
+    def get_args(self):
+        """Return args to be used in test command."""
+        return '--size %s --type %s' % (self.size, self.type)
+
+    def initialize_options(self):
+        """Set default size and type args."""
+        self.size = 'all'
+        self.type = 'unit'
+
+    def finalize_options(self):
+        """Post-process."""
+        try:
+            assert self.size in self.sizes, ('ERROR: Invalid size:'
+                                             f':{self.size}')
+            assert self.type in self.types, ('ERROR: Invalid type:'
+                                             f':{self.type}')
+        except AssertionError as exc:
+            print(exc)
+            sys.exit(-1)
+
+
 class Cleaner(SimpleCommand):
     """Custom clean command to tidy up the project root."""
 
@@ -67,17 +96,41 @@ class Cleaner(SimpleCommand):
         call('make -C docs/ clean', shell=True)
 
 
-class TestCoverage(SimpleCommand):
-    """Display test coverage."""
+class Test(TestCommand):
+    """Run all tests."""
 
-    description = 'run unit tests and display code coverage'
+    description = 'run tests and display results'
+
+    def get_args(self):
+        """Return args to be used in test command."""
+        markers = self.size
+        if markers == "small":
+            markers = 'not medium and not large'
+        size_args = "" if self.size == "all" else "-m '%s'" % markers
+        return '--addopts="tests/%s %s"' % (self.type, size_args)
 
     def run(self):
-        """Run unittest quietly and display coverage report."""
-        # temporarily disabling running integration tests
-        cmd = ('coverage3 run -m unittest discover -s tests/unit'
-               ' && coverage3 report')
-        call(cmd, shell=True)
+        """Run tests."""
+        cmd = 'python setup.py test_fw %s' % self.get_args()
+        try:
+            check_call(cmd, shell=True)
+        except CalledProcessError as exc:
+            print(exc)
+
+
+class TestCoverage(Test):
+    """Display test coverage."""
+
+    description = 'run tests and display code coverage'
+
+    def run(self):
+        """Run tests quietly and display coverage report."""
+        cmd = 'coverage3 run setup.py test_fw %s' % self.get_args()
+        cmd += '&& coverage3 report'
+        try:
+            check_call(cmd, shell=True)
+        except CalledProcessError as exc:
+            print(exc)
 
 
 class Linter(SimpleCommand):
@@ -88,19 +141,19 @@ class Linter(SimpleCommand):
     def run(self):
         """Run yala."""
         print('Yala is running. It may take several seconds...')
-        check_call('yala *.py', shell=True)
+        check_call('yala *.py v0x?? tests', shell=True)
 
 
-class CITest(SimpleCommand):
+class CITest(TestCommand):
     """Run all CI tests."""
 
     description = 'run all CI tests: unit and doc tests, linter'
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        cmds = ['python3.6 setup.py ' + cmd
-                for cmd in ('coverage', 'lint')]
-        cmd = ' && '.join(cmds)
+        coverage_cmd = 'python3.6 setup.py coverage %s' % self.get_args()
+        lint_cmd = 'python3.6 setup.py lint'
+        cmd = '%s && %s' % (coverage_cmd, lint_cmd)
         check_call(cmd, shell=True)
 
 
@@ -215,7 +268,8 @@ setup(name='kytos_of_core',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=['setuptools >= 36.0.1'],
+      setup_requires=['pytest-runner'],
+      tests_require=['pytest'],
       extras_require={
           'dev': [
               'coverage',
@@ -228,10 +282,10 @@ setup(name='kytos_of_core',
           'clean': Cleaner,
           'ci': CITest,
           'coverage': TestCoverage,
-
           'develop': DevelopMode,
           'install': InstallMode,
           'lint': Linter,
+          'test': Test,
           # 'egg_info': EggInfo,
       },
       zip_safe=False,
