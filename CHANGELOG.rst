@@ -26,6 +26,14 @@ Fixed
 Security
 ========
 
+[1.4.1] - 2020-05-19
+********************
+
+Added
+=====
+- Added new unit tests, increasing coverage to 47%.
+- Added '.travis.yml' to enable Travis CI.
+- Added tags decorator to run tests by type and size.
 
 [1.4.0] - 2020-03-09
 ********************
