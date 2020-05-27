@@ -1,19 +1,21 @@
 """Test Main methods."""
 from unittest import TestCase
-from unittest.mock import MagicMock, create_autospec, patch
+from unittest.mock import MagicMock, create_autospec, patch, PropertyMock
 
 from pyof.foundation.network_types import Ethernet
 from pyof.v0x01.controller2switch.common import StatsType
 from pyof.v0x04.controller2switch.common import MultipartType
 
 from kytos.core.connection import ConnectionState
-from tests.helpers import (get_connection_mock, get_controller_mock,
-                           get_kytos_event_mock, get_switch_mock)
+from kytos.lib.helpers import (get_switch_mock, get_kytos_event_mock,
+                               get_connection_mock)
+
+from tests.helpers import get_controller_mock
 
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-public-methods
 class TestMain(TestCase):
-    """docstring for TestMain."""
+    """Test the Main class."""
 
     def setUp(self):
         """Execute steps before each tests.
@@ -33,6 +35,23 @@ class TestMain(TestCase):
 
         self.napp = Main(get_controller_mock())
 
+    @patch('napps.kytos.of_core.v0x01.utils.send_echo')
+    @patch('napps.kytos.of_core.v0x04.utils.send_echo')
+    def test_execute(self, *args):
+        """Test execute."""
+        (mock_of_core_v0x04_utils, mock_of_core_v0x01_utils) = args
+        self.switch_v0x01.is_connected.return_value = True
+        self.switch_v0x04.is_connected.return_value = True
+        self.napp.controller.switches = {"00:00:00:00:00:00:00:01":
+                                         self.switch_v0x01}
+        self.napp.execute()
+        mock_of_core_v0x01_utils.assert_called()
+
+        self.napp.controller.switches = {"00:00:00:00:00:00:00:01":
+                                         self.switch_v0x04}
+        self.napp.execute()
+        mock_of_core_v0x04_utils.assert_called()
+
     @patch('napps.kytos.of_core.v0x04.utils.update_flow_list')
     @patch('napps.kytos.of_core.v0x01.utils.update_flow_list')
     def test_request_flow_list(self, *args):
@@ -47,17 +66,18 @@ class TestMain(TestCase):
                                                        self.switch_v0x04)
 
     @patch('napps.kytos.of_core.v0x01.flow.Flow.from_of_flow_stats')
-    @patch('kytos.core.switch.Switch.update_description')
-    def test_handle_stats_reply(self, *args):
+    def test_handle_stats_reply(self, mock_from_of_flow_stats_v0x01):
         """Test handle stats reply."""
-        (mock_update_description, mock_from_of_flow_stats_v0x01) = args
         mock_from_of_flow_stats_v0x01.return_value = "ABC"
 
         flow_msg = MagicMock()
         flow_msg.body = "A"
         flow_msg.body_type = StatsType.OFPST_FLOW
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection,
-                                     message=flow_msg)
+
+        name = 'kytos/of_core.v0x01.messages.in.ofpt_stats_reply'
+        content = {"source": self.switch_v0x01.connection,
+                   "message": flow_msg}
+        event = get_kytos_event_mock(name=name, content=content)
         self.napp.handle_stats_reply(event)
         mock_from_of_flow_stats_v0x01.assert_called_with(
             flow_msg.body, self.switch_v0x01.connection.switch)
@@ -65,68 +85,71 @@ class TestMain(TestCase):
         desc_msg = MagicMock()
         desc_msg.body = "A"
         desc_msg.body_type = StatsType.OFPST_DESC
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection,
-                                     message=desc_msg)
+        content = {"source": self.switch_v0x01.connection,
+                   "message": desc_msg}
+        event = get_kytos_event_mock(name=name, content=content)
+        switch_update = self.switch_v0x01.connection.switch.update_description
         self.napp.handle_stats_reply(event)
-        mock_update_description.assert_called_with(desc_msg.body)
+        self.assertEqual(switch_update.call_count, 1)
 
-    @patch('kytos.core.switch.Switch.update_description')
     @patch('napps.kytos.of_core.main.Main._handle_multipart_flow_stats')
     @patch('napps.kytos.of_core.v0x04.utils.handle_port_desc')
     def test_handle_multipart_reply(self, *args):
         """Test handle multipart reply."""
-        (mock_of_core_v0x04_utils, mock_from_of_flow_stats_v0x04,
-         mock_update_description) = args
+        (mock_of_core_v0x04_utils, mock_from_of_flow_stats_v0x04) = args
 
         flow_msg = MagicMock()
         flow_msg.multipart_type = MultipartType.OFPMP_FLOW
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection,
-                                     message=flow_msg)
+        name = 'kytos/of_core.v0x04.messages.in.ofpt_multipart_reply'
+        content = {"source": self.switch_v0x04.connection,
+                   "message": flow_msg}
+        event = get_kytos_event_mock(name=name, content=content)
 
         self.napp.handle_multipart_reply(event)
         mock_from_of_flow_stats_v0x04.assert_called_with(
-            flow_msg, self.switch_v0x01.connection.switch)
+            flow_msg, self.switch_v0x04.connection.switch)
 
         ofpmp_port_desc = MagicMock()
         ofpmp_port_desc.body = "A"
         ofpmp_port_desc.multipart_type = MultipartType.OFPMP_PORT_DESC
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection,
-                                     message=ofpmp_port_desc)
+        content = {"source": self.switch_v0x04.connection,
+                   "message": ofpmp_port_desc}
+        event = get_kytos_event_mock(name=name, content=content)
         self.napp.handle_multipart_reply(event)
         mock_of_core_v0x04_utils.assert_called_with(
-            self.napp.controller, self.switch_v0x01.connection.switch,
+            self.napp.controller, self.switch_v0x04.connection.switch,
             ofpmp_port_desc.body)
 
         ofpmp_desc = MagicMock()
         ofpmp_desc.body = "A"
         ofpmp_desc.multipart_type = MultipartType.OFPMP_DESC
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection,
-                                     message=ofpmp_desc)
+        content = {"source": self.switch_v0x04.connection,
+                   "message": ofpmp_desc}
+        event = get_kytos_event_mock(name=name, content=content)
+        switch_update = self.switch_v0x04.connection.switch.update_description
         self.napp.handle_multipart_reply(event)
-        mock_update_description.assert_called_with(ofpmp_desc.body)
+        self.assertEqual(switch_update.call_count, 1)
 
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.v0x04.utils.send_set_config')
     @patch('napps.kytos.of_core.v0x01.utils.send_set_config')
     @patch('napps.kytos.of_core.v0x04.utils.send_desc_request')
     @patch('napps.kytos.of_core.v0x01.utils.send_desc_request')
-    @patch('kytos.core.connection.Connection.set_established_state')
-    @patch('kytos.core.connection.Connection.is_during_setup')
     @patch('napps.kytos.of_core.v0x04.utils.handle_features_reply')
     @patch('napps.kytos.of_core.v0x01.utils.handle_features_reply')
     def test_handle_features_reply(self, *args):
         """Test handle features reply."""
-        (mock_freply_v0x01, mock_freply_v0x04, mock_is_during_setup,
-         mock_set_established_state, mock_send_desc_request_v0x01,
+        (mock_freply_v0x01, mock_freply_v0x04, mock_send_desc_request_v0x01,
          mock_send_desc_request_v0x04, mock_send_set_config_v0x01,
          mock_send_set_config_v0x04, mock_buffers_put) = args
         mock_freply_v0x01.return_value = self.switch_v0x01.connection.switch
         mock_freply_v0x04.return_value = self.switch_v0x04.connection.switch
-        mock_is_during_setup.return_value = True
 
         self.switch_v0x01.connection.state = ConnectionState.SETUP
         self.switch_v0x01.connection.protocol.state = 'waiting_features_reply'
-        event = get_kytos_event_mock(source=self.switch_v0x01.connection)
+        name = 'kytos/of_core.v0x0[14].messages.in.ofpt_features_reply'
+        content = {"source": self.switch_v0x01.connection}
+        event = get_kytos_event_mock(name=name, content=content)
         self.napp.handle_features_reply(event)
         mock_freply_v0x01.assert_called_with(self.napp.controller, event)
         mock_send_desc_request_v0x01.assert_called_with(
@@ -136,7 +159,8 @@ class TestMain(TestCase):
 
         self.switch_v0x04.connection.state = ConnectionState.SETUP
         self.switch_v0x04.connection.protocol.state = 'waiting_features_reply'
-        event = get_kytos_event_mock(source=self.switch_v0x04.connection)
+        content = {"source": self.switch_v0x04.connection}
+        event = get_kytos_event_mock(name=name, content=content)
         self.napp.handle_features_reply(event)
         mock_freply_v0x04.assert_called_with(self.napp.controller, event)
         mock_send_desc_request_v0x04.assert_called_with(
@@ -144,8 +168,6 @@ class TestMain(TestCase):
         mock_send_set_config_v0x04.assert_called_with(
             self.napp.controller, self.switch_v0x04.connection.switch)
 
-        mock_is_during_setup.assert_called()
-        mock_set_established_state.assert_called()
         mock_buffers_put.assert_called()
 
     @patch('napps.kytos.of_core.main.Main._update_switch_flows')
@@ -170,6 +192,53 @@ class TestMain(TestCase):
         mock_from_of_flow_stats_v0x01.assert_called_with(flow_msg.body,
                                                          self.switch_v0x04)
         mock_update_switch_flows.assert_called_with(self.switch_v0x04)
+
+    def test_update_switch_flows(self):
+        """Test update_switch_flows."""
+        dpid = '00:00:00:00:00:00:00:01'
+        mock_switch = get_switch_mock(dpid)
+        mock_switch.id = dpid
+        self.napp._multipart_replies_flows = {dpid: mock_switch}
+        self.napp._multipart_replies_xids = {dpid: mock_switch}
+        self.napp._update_switch_flows(mock_switch)
+        self.assertEqual(self.napp._multipart_replies_xids, {})
+        self.assertEqual(self.napp._multipart_replies_flows, {})
+
+    def test_is_multipart_reply_ours(self):
+        """Test _is_multipart_reply_ours."""
+        dpid_a = '00:00:00:00:00:00:00:01'
+        dpid_b = '00:00:00:00:00:00:00:02'
+        mock_switch = get_switch_mock(dpid_a)
+        mock_reply = MagicMock()
+        mock_reply.header.xid = mock_switch
+        type(mock_switch).id = PropertyMock(side_effect=[dpid_a,
+                                            dpid_a, dpid_b])
+        self.napp._multipart_replies_xids = {dpid_a: mock_switch}
+        response = self.napp._is_multipart_reply_ours(mock_reply, mock_switch)
+        self.assertEqual(response, True)
+
+        response = self.napp._is_multipart_reply_ours(mock_reply, mock_switch)
+        self.assertEqual(response, False)
+
+    @patch('napps.kytos.of_core.main.of_slicer')
+    @patch('napps.kytos.of_core.main.Main._negotiate')
+    @patch('napps.kytos.of_core.main.Main.emit_message_in')
+    def test_handle_raw_in(self, *args):
+        """Test handle_raw_in."""
+        (mock_emit_message_in, mock_negotiate, mock_of_slicer) = args
+        mock_packets = MagicMock()
+        mock_data = MagicMock()
+        mock_connection = MagicMock()
+        mock_connection.is_new.side_effect = [True, False]
+        mock_connection.is_during_setup.return_value = False
+        mock_of_slicer.return_value = [[mock_packets, mock_packets], mock_data]
+        name = 'kytos/core.openflow.raw.in'
+        content = {'source': mock_connection, 'new_data': mock_data}
+        mock_event = get_kytos_event_mock(name=name, content=content)
+
+        self.napp.handle_raw_in(mock_event)
+        mock_negotiate.assert_called()
+        mock_emit_message_in.assert_called()
 
     @patch('napps.kytos.of_core.main.Main.update_port_status')
     @patch('napps.kytos.of_core.main.Main.update_links')
@@ -270,6 +339,26 @@ class TestMain(TestCase):
         mock_features_request.assert_called()
         mock_emit_message_out.assert_called_with(mock_destination, "A")
 
+    def test_handle_features_request_sent(self):
+        """Test tests_handle_features_request_sent."""
+        mock_protocol = MagicMock()
+        mock_protocol.protocol.state = 'sending_features'
+        expected = 'waiting_features_reply'
+        name = 'kytos/of_core.v0x0[14].messages.out.ofpt_features_request'
+        content = {'destination': mock_protocol}
+        mock_event = get_kytos_event_mock(name=name, content=content)
+        self.napp.handle_features_request_sent(mock_event)
+        self.assertEqual(mock_event.destination.protocol.state, expected)
+
+    def test_handle_openflow_in_hello_failed(self):
+        """Test handle_openflow_in_hello_failed."""
+        mock_destination = MagicMock()
+        content = {'destination': mock_destination}
+        mock_event = get_kytos_event_mock(name='kytos/of_core',
+                                          content=content)
+        self.napp.handle_openflow_in_hello_failed(mock_event)
+        self.assertEqual(mock_event.destination.close.call_count, 1)
+
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.main.Ethernet')
     def test_update_links(self, *args):
@@ -289,6 +378,17 @@ class TestMain(TestCase):
         """Test send specific port."""
         mock_port = MagicMock()
         mock_interface = MagicMock()
+        type(mock_port.state).value = PropertyMock(side_effect=[0, 1, 2])
+        current_state = 0
+        self.napp._send_specific_port_mod(mock_port,
+                                          mock_interface, current_state)
+        mock_buffer_put.assert_called()
+
+        current_state = 1
+        self.napp._send_specific_port_mod(mock_port,
+                                          mock_interface, current_state)
+        mock_buffer_put.assert_called()
+
         current_state = 2
         self.napp._send_specific_port_mod(mock_port,
                                           mock_interface, current_state)
@@ -302,13 +402,20 @@ class TestMain(TestCase):
         (mock_port_mod, mock_interface, mock_buffer_put) = args
         mock_port_status = MagicMock()
         mock_source = MagicMock()
-        mock_port_status.reason.value.side_effect = [0, 1]
+
+        mock_port_status.reason.value.side_effect = [0, 1, 2]
         mock_port_status.reason.enum_ref(0).name = 'OFPPR_ADD'
         self.napp.update_port_status(mock_port_status, mock_source)
         mock_interface.assert_called()
 
         # check OFPRR_MODIFY
         mock_port_status.reason.enum_ref(1).name = 'OFPPR_MODIFY'
+        self.napp.update_port_status(mock_port_status, mock_source)
+        mock_port_mod.assert_called()
+        mock_buffer_put.assert_called()
+
+        # check OFPRR_DELETE
+        mock_port_status.reason.enum_ref(2).name = 'OFPPR_DELETE'
         self.napp.update_port_status(mock_port_status, mock_source)
         mock_port_mod.assert_called()
         mock_buffer_put.assert_called()
