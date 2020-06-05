@@ -1,3 +1,3 @@
 [run]
 source = .
-omit = *tests*,.tox/*,setup.py
+omit = .eggs/*,.tox/*,*tests*,setup.py
