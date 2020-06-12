@@ -73,15 +73,30 @@ class MatchDLVLAN(MatchField):
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value = self.value | VlanId.OFPVID_PRESENT
+        try:
+            value = int(self.value)
+            mask = None
+            oxm_hasmask = False
+        except ValueError:
+            value, mask = map(int, self.value.split('/'))
+            oxm_hasmask = True
+        value = value | VlanId.OFPVID_PRESENT
         value_bytes = value.to_bytes(2, 'big')
-        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+        if mask:
+            mask = mask | VlanId.OFPVID_PRESENT
+            value_bytes += mask.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_hasmask=oxm_hasmask, 
+                        oxm_value=value_bytes)
 
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        vlan_id = int.from_bytes(tlv.oxm_value, 'big') & 4095
-        return cls(vlan_id)
+        vlan_id = int.from_bytes(tlv.oxm_value[:2], 'big') & 4095
+        value = vlan_id
+        if tlv.oxm_hasmask:
+            vlan_mask = int.from_bytes(tlv.oxm_value[2:], 'big') & 4095
+            value = f'{vlan_id}/{vlan_mask}'
+        return cls(value)
 
 
 class MatchDLVLANPCP(MatchField):
@@ -110,8 +125,23 @@ class MatchDLSrc(MatchField):
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value_bytes = HWAddress(self.value).pack()
-        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+        if '/' in self.value:
+            value, mask = self.value.split('/')
+            if mask.upper() == 'FF:FF:FF:FF:FF:FF':
+                mask = None
+                oxm_hasmask = False
+            else:
+                mask = mask.upper()
+                oxm_hasmask = True
+        else:
+            value = self.value
+            mask = None
+            oxm_hasmask = False
+        value_bytes = HWAddress(value).pack()
+        if mask:
+            value_bytes += HWAddress(mask).pack()
+        return OxmTLV(oxm_field=self.oxm_field, oxm_hasmask=oxm_hasmask, 
+                        oxm_value=value_bytes)
 
     @classmethod
     def from_of_tlv(cls, tlv):
@@ -119,7 +149,13 @@ class MatchDLSrc(MatchField):
         hw_address = HWAddress()
         hw_address.unpack(tlv.oxm_value)
         addr_str = str(hw_address)
-        return cls(addr_str)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            hw_mask = HWAddress()
+            hw_mask.unpack(tlv.oxm_value[6:])
+            mask_str = str(hw_mask)
+            value = f'{addr_str}/{mask_str}'
+        return cls(value)
 
 
 class MatchDLDst(MatchField):
