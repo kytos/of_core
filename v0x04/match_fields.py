@@ -27,7 +27,7 @@ def bytes_to_mask(tobytes, size):
     strbits = strbits[:2]
     netmask = 0
     for i in range(size):
-        if strbits[i] = '1':
+        if strbits[i] == '1':
             netmask += 1
         else:
             break
