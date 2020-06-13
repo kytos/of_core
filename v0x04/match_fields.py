@@ -22,9 +22,10 @@ def mask_to_bytes(mask, size):
 
 
 def bytes_to_mask(tobytes, size):
-    bits = bin(tobytes)
+    int_mask = int.from_bytes(tobytes, 'big')
+    bits = bin(int_mask)
     strbits = str(bits)
-    strbits = strbits[:2]
+    strbits = strbits[2:]
     netmask = 0
     for i in range(size):
         if strbits[i] == '1':
