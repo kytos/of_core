@@ -254,7 +254,7 @@ class MatchNwDst(MatchField):
     """Match for IPV4 destination."""
 
     name = 'nw_dst'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV4_DST
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV4=_DST
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
@@ -277,6 +277,26 @@ class MatchNwDst(MatchField):
             value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
         return cls(value)
 
+
+def mask_to_bytes(mask, size):
+    bits = 0
+    for i in range(size-mask,size):
+        bits |= (1 << i)
+    tobytes = bits.to_bytes(size//8, 'big')
+    return tobytes
+
+def bytes_to_mask(tobytes, size):
+    bits = bin(tobytes)
+    strbits = str(bits)
+    strbits = strbits[:2]
+    netmask = 0
+    for i in range(size):
+        if strbits[i] = '1':
+            netmask += 1
+        else:
+            break
+    return netmask
+    
 
 class MatchNwProto(MatchField):
     """Match for IP protocol."""
