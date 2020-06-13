@@ -220,21 +220,47 @@ class MatchNwDst(MatchField):
     """Match for IPV4 destination."""
 
     name = 'nw_dst'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV4_DST
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV4=_DST
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value_bytes = IPAddress(self.value).pack()
-        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+        ip = IPAddress(self.value)
+        value_bytes = ip.pack()
+        if ip.netmask < 32:
+            value_bytes += mask_to_bytes(ip.netmask, 32)
+        return OxmTLV(oxm_field=self.oxm_field, oxm_hasmask = ip.netmask < 32, oxm_value=value_bytes)
 
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
         ip_address = IPAddress()
         ip_address.unpack(tlv.oxm_value)
+        value = str(ip_address)
+        if tlv.oxm_hasmask:
+            value = f'{value}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
         ip_str = str(ip_address)
         return cls(ip_str)
 
+
+def mask_to_bytes(mask, size):
+    bits = 0
+    for i in range(size-mask,size):
+        bits |= (1 << i)
+    tobytes = bits.to_bytes(size//8, 'big')
+    return tobytes
+
+def bytes_to_mask(tobytes, size):
+    bits = bin(tobytes)
+    strbits = str(bits)
+    strbits = strbits[:2]
+    netmask = 0
+    for i in range(size):
+        if strbits[i] = '1':
+            netmask += 1
+        else:
+            break
+    return netmask
+    
 
 class MatchNwProto(MatchField):
     """Match for IP protocol."""
