@@ -188,7 +188,7 @@ class MatchDLDst(MatchField):
     """Match for datalink destination."""
 
     name = 'dl_dst'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ETH_DST
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ETH_SRC
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
