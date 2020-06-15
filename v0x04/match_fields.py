@@ -181,10 +181,10 @@ class MatchDLSrc(MatchField):
 
 
 class MatchDLDst(MatchField):
-    """Match for dataling destination."""
+    """Match for datalink destination."""
 
     name = 'dl_dst'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ETH_SRC
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ETH_DST
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
@@ -245,7 +245,6 @@ class MatchNwSrc(MatchField):
     name = 'nw_src'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV4_SRC
 
-    def as_of_tlv(self):
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
         ip = IPAddress(self.value)
