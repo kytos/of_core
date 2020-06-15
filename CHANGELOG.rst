@@ -8,11 +8,10 @@ All notable changes to the of_core NApp will be documented in this file.
 
 Added
 =====
-- Added new unit tests, increasing coverage to 47%.
-- Added '.travis.yml' to enable Travis CI.
-- Added tags decorator to run tests by type and size.
+
 Changed
 =======
+- Updated .coveragerc to ignore .eggs in tests 
 
 Deprecated
 ==========
