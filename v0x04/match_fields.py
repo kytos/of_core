@@ -16,14 +16,16 @@ from napps.kytos.of_core.v0x04.utils import bytes_to_mask, mask_to_bytes
 
 
 def mask_to_bytes(mask, size):
+    """Return the mask in bytes."""
     bits = 0
-    for i in range(size-mask,size):
+    for i in range(size-mask, size):
         bits |= (1 << i)
     tobytes = bits.to_bytes(size//8, 'big')
     return tobytes
 
 
 def bytes_to_mask(tobytes, size):
+    """Return the mask in string."""
     int_mask = int.from_bytes(tobytes, 'big')
     bits = bin(int_mask)
     strbits = str(bits)
