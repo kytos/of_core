@@ -111,7 +111,7 @@ class MatchDLVLAN(MatchField):
             value_bytes += mask.to_bytes(2, 'big')
         return OxmTLV(oxm_field=self.oxm_field,
                       oxm_hasmask=oxm_hasmask,
-                        oxm_value=value_bytes)
+                      oxm_value=value_bytes)
 
     @classmethod
     def from_of_tlv(cls, tlv):
