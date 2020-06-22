@@ -127,3 +127,27 @@ def say_hello(controller, connection):
     """Send back a Hello packet with the same version as the switch."""
     hello = Hello()
     emit_message_out(controller, connection, hello)
+
+
+def mask_to_bytes(mask, size):
+    """Return the mask in bytes."""
+    bits = 0
+    for i in range(size-mask, size):
+        bits |= (1 << i)
+    tobytes = bits.to_bytes(size//8, 'big')
+    return tobytes
+
+
+def bytes_to_mask(tobytes, size):
+    """Return the mask in string."""
+    int_mask = int.from_bytes(tobytes, 'big')
+    bits = bin(int_mask)
+    strbits = str(bits)
+    strbits = strbits[2:]
+    netmask = 0
+    for i in range(size):
+        if strbits[i] == '1':
+            netmask += 1
+        else:
+            break
+    return netmask
