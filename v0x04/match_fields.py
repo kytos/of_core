@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from pyof.foundation.basic_types import HWAddress, IPAddress
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
 
-from napps.kytos.of_core.v0x04.utils import mask_to_bytes, bytes_to_mask
+from napps.kytos.of_core.v0x04.utils import bytes_to_mask, mask_to_bytes
 
 
 class MatchField(ABC):
