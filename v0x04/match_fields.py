@@ -11,32 +11,7 @@ from abc import ABC, abstractmethod
 
 from pyof.foundation.basic_types import HWAddress, IPAddress
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
-
-from napps.kytos.of_core.v0x04.utils import bytes_to_mask, mask_to_bytes
-
-
-def mask_to_bytes(mask, size):
-    """Return the mask in bytes."""
-    bits = 0
-    for i in range(size-mask, size):
-        bits |= (1 << i)
-    tobytes = bits.to_bytes(size//8, 'big')
-    return tobytes
-
-
-def bytes_to_mask(tobytes, size):
-    """Return the mask in string."""
-    int_mask = int.from_bytes(tobytes, 'big')
-    bits = bin(int_mask)
-    strbits = str(bits)
-    strbits = strbits[2:]
-    netmask = 0
-    for i in range(size):
-        if strbits[i] == '1':
-            netmask += 1
-        else:
-            break
-    return netmask
+from napps.kytos.of_core.v0x04.utils import mask_to_bytes, bytes_to_mask
 
 
 class MatchField(ABC):
@@ -298,7 +273,7 @@ class MatchNwDst(MatchField):
         addr_str = str(ip_address)
         value = addr_str
         if tlv.oxm_hasmask:
-            value = f'{value}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
+            value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
         return cls(value)
 
 
