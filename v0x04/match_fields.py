@@ -350,6 +350,106 @@ class MatchTCPDst(MatchField):
         return cls(port)
 
 
+class MatchICMPV6Type(MatchField):
+    """Match for ICMPV6 type."""
+
+    name = 'icmpv6_type'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ICMPV6_TYPE
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        port = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(port)
+
+
+class MatchICMPV6Code(MatchField):
+    """Match for ICMPV6 code."""
+
+    name = 'icmpv6_code'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ICMPV6_CODE
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        priority = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(priority)
+
+
+class MatchIVP6FLabel(MatchField):
+    """Match for IPV6 Flow Label."""
+
+    name = 'ipv6_flabel'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_FLABEL
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        try:
+            value = int(self.value)
+            mask = None
+            oxm_hasmask = False
+        except ValueError:
+            value, mask = map(int, self.value.split('/'))
+            oxm_hasmask = True
+        value_bytes = value.to_bytes(4, 'big')
+        if mask:
+            value_bytes += mask.to_bytes(4, 'big')
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value[:4], 'big')
+        if tlv.oxm_hasmask:
+            flabel_mask = int.from_bytes(tlv.oxm_value[4:], 'big')
+            value = f'{value}/{flabel_mask}'
+        return cls(value)
+
+
+class MatchPBBISID(MatchField):
+    """Match for PBB ISID."""
+
+    name = 'pbb_isid'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_PBB_ISID
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        try:
+            value = int(self.value)
+            mask = None
+            oxm_hasmask = False
+        except ValueError:
+            value, mask = map(int, self.value.split('/'))
+            oxm_hasmask = True
+        value_bytes = value.to_bytes(3, 'big')
+        if mask:
+            value_bytes += mask.to_bytes(3, 'big')
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value[:3], 'big')
+        if tlv.oxm_hasmask:
+            pbb_isid_mask = int.from_bytes(tlv.oxm_value[3:], 'big')
+            value = f'{value}/{pbb_isid_mask}'
+        return cls(value)
+    
+    
 class MatchFieldFactory(ABC):
     """Create the correct MatchField subclass instance.
 
