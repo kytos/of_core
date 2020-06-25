@@ -349,7 +349,7 @@ class MatchTCPDst(MatchField):
         port = int.from_bytes(tlv.oxm_value, 'big')
         return cls(port)
 
-    
+
 class MatchFieldFactory(ABC):
     """Create the correct MatchField subclass instance.
 
