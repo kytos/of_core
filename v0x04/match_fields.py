@@ -349,6 +349,79 @@ class MatchTCPDst(MatchField):
         port = int.from_bytes(tlv.oxm_value, 'big')
         return cls(port)
 
+
+class MatchInPhyPort(MatchField):
+    """Match for physical input port."""
+
+    name = 'in_phy_port'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IN_PHY_PORT
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(4, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        port = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(port)
+
+
+class MatchIPDSCP(MatchField):
+    """Match for IP DSCP."""
+
+    name = 'ip_dscp'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IP_DSCP
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(value)
+
+
+class MatchIPECN(MatchField):
+    """Match for IP ECN."""
+
+    name = 'ip_ecn'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IP_ECN
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(value)
+
+
+class MatchARPOP(MatchField):
+    """Match for ARP opcode."""
+
+    name = 'arp_op'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ARP_OP
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        opcode = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(opcode)
+
+
 class MatchNDTarget(MatchField):
     """Match for IPV6 ND Target"""
 
@@ -365,6 +438,7 @@ class MatchNDTarget(MatchField):
         """Return an instance from a pyof OXM TLV."""
         target = int.from_bytes(tlv.oxm_value, 'big')
         return cls(target)
+
 
 class MatchNDSLL(MatchField):
     """Match for IPV6 ND SLL"""
@@ -383,6 +457,7 @@ class MatchNDSLL(MatchField):
         sll = int.from_bytes(tlv.oxm_value, 'big')
         return cls(sll)
 
+
 class MatchNDTLL(MatchField):
     """Match for IPV6 ND TLL"""
 
@@ -399,6 +474,7 @@ class MatchNDTLL(MatchField):
         """Return an instance from a pyof OXM TLV."""
         tll = int.from_bytes(tlv.oxm_value, 'big')
         return cls(tll)
+
 
 class MatchEXTHDR(MatchField):
     """Match for IPV6 EXTHDR"""
@@ -430,6 +506,7 @@ class MatchEXTHDR(MatchField):
             exhead_mask = int.from_bytes(tlv.oxm_value[2:], 'big')
             value = f'{value}/{exhead_mask}'
         return cls(value)
+
 
 class MatchFieldFactory(ABC):
     """Create the correct MatchField subclass instance.
