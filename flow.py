@@ -276,7 +276,8 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
                  nw_dst=None, tp_src=None, tp_dst=None, in_phy_port=None,
                  ip_dscp=None, ip_ecn=None, arp_op=None, nd_tar=None,
-                 nd_sll=None, nd_tll=None, v6_hdr=None):
+                 nd_sll=None, nd_tll=None, v6_hdr=None, icmpv6_type=None, 
+                 icmpv6_code=None, ipv6_flabel=None, pbb_isid=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
         self.in_port = in_port
@@ -298,6 +299,10 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.nd_sll = nd_sll
         self.nd_tll = nd_tll
         self.v6_hdr = v6_hdr
+        self.icmpv6_type = icmpv6_type
+        self.icmpv6_code = icmpv6_code
+        self.ipv6_flabel = ipv6_flabel
+        self.pbb_isid = pbb_isid
 
     def as_dict(self):
         """Return a dictionary excluding ``None`` values."""
