@@ -574,7 +574,77 @@ class MatchPBBISID(MatchField):
             pbb_isid_mask = int.from_bytes(tlv.oxm_value[3:], 'big')
             value = f'{value}/{pbb_isid_mask}'
         return cls(value)
+    
+    
+class MatchUDPSrc(MatchField):
+    """Match for UDP source."""
 
+    name = 'udp_src'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_UDP_SRC
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        port = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(port)
+
+
+class MatchUDPDst(MatchField):
+    """Match for UDP destination."""
+
+    name = 'udp_dst'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_UDP_DST
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        port = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(port)
+
+
+class MatchICMPV4Type(MatchField):
+    """Match for ICMPV4 type."""
+
+    name = 'icmpv4_type'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ICMPV4_TYPE
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        port = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(port)
+
+class MatchICMPV4Code(MatchField):
+    """Match for ICMPV4 code."""
+
+    name = 'icmpv4_code'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ICMPV4_CODE
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        priority = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(priority)
 
 class MatchEXTHDR(MatchField):
     """Match for IPV6 EXTHDR"""
