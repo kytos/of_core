@@ -563,16 +563,16 @@ class MatchICMPV6Code(MatchField):
 
 
 class MatchNDTarget(MatchField):
-    """Match for IPV6 ND Target"""
+    """Match for IPV6 ND Target."""
 
     name = 'nd_tar'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_TARGET
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value_bytes = self.value.to_bytes(16,'big')
+        value_bytes = self.value.to_bytes(16, 'big')
         return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
-    
+
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
@@ -581,16 +581,16 @@ class MatchNDTarget(MatchField):
 
 
 class MatchNDSLL(MatchField):
-    """Match for IPV6 ND SLL"""
+    """Match for IPV6 ND SLL."""
 
     name = 'nd_sll'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_SLL
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value_bytes = self.value.to_bytes(6,'big')
+        value_bytes = self.value.to_bytes(6, 'big')
         return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
-    
+
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
@@ -599,16 +599,16 @@ class MatchNDSLL(MatchField):
 
 
 class MatchNDTLL(MatchField):
-    """Match for IPV6 ND TLL"""
+    """Match for IPV6 ND TLL."""
 
     name = 'nd_tll'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_TLL
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        value_bytes = self.value.to_bytes(6,'big')
+        value_bytes = self.value.to_bytes(6, 'big')
         return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
-    
+
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
@@ -649,7 +649,7 @@ class MatchPBBISID(MatchField):
 
 
 class MatchEXTHDR(MatchField):
-    """Match for IPV6 EXTHDR"""
+    """Match for IPV6 EXTHDR."""
 
     name = 'v6_hdr'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_EXTHDR
@@ -673,7 +673,7 @@ class MatchEXTHDR(MatchField):
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        value = int.from_bytes(tlv.oxm_value[:2],'big')
+        value = int.from_bytes(tlv.oxm_value[:2], 'big')
         if tlv.oxm_hasmask:
             exhead_mask = int.from_bytes(tlv.oxm_value[2:], 'big')
             value = f'{value}/{exhead_mask}'
