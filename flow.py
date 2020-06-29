@@ -282,7 +282,7 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
                  v6_hdr=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
-        pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals
         self.in_port = in_port
         self.dl_src = dl_src
         self.dl_dst = dl_dst
