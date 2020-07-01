@@ -494,7 +494,7 @@ class MatchARPOP(MatchField):
         return cls(opcode)
 
 
-class MatchIVP6FLabel(MatchField):
+class MatchIPV6FLabel(MatchField):
     """Match for IPV6 Flow Label."""
 
     name = 'ipv6_flabel'
