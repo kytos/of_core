@@ -9,7 +9,7 @@ from pyof.v0x04.controller2switch.common import MultipartType
 from kytos.core.connection import ConnectionState
 from kytos.lib.helpers import (get_switch_mock, get_kytos_event_mock,
                                get_connection_mock)
-
+from napps.kytos.of_core.utils import NegotiationException
 from tests.helpers import get_controller_mock
 
 
@@ -21,8 +21,8 @@ class TestMain(TestCase):
         """Execute steps before each tests.
         Set the server_name_url from kytos/of_core
         """
-        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01")
-        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02")
+        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01", "v0x01")
+        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02", "v0x04")
         self.switch_v0x01.connection = get_connection_mock(
             0x01, get_switch_mock("00:00:00:00:00:00:00:03"))
         self.switch_v0x04.connection = get_connection_mock(
@@ -32,7 +32,6 @@ class TestMain(TestCase):
         # pylint: disable=bad-option-value
         from napps.kytos.of_core.main import Main
         self.addCleanup(patch.stopall)
-
         self.napp = Main(get_controller_mock())
 
     @patch('napps.kytos.of_core.v0x01.utils.send_echo')
@@ -212,7 +211,7 @@ class TestMain(TestCase):
         mock_reply = MagicMock()
         mock_reply.header.xid = mock_switch
         type(mock_switch).id = PropertyMock(side_effect=[dpid_a,
-                                            dpid_a, dpid_b])
+                                                         dpid_a, dpid_b])
         self.napp._multipart_replies_xids = {dpid_a: mock_switch}
         response = self.napp._is_multipart_reply_ours(mock_reply, mock_switch)
         self.assertEqual(response, True)
@@ -226,12 +225,13 @@ class TestMain(TestCase):
     def test_handle_raw_in(self, *args):
         """Test handle_raw_in."""
         (mock_emit_message_in, mock_negotiate, mock_of_slicer) = args
+
         mock_packets = MagicMock()
         mock_data = MagicMock()
         mock_connection = MagicMock()
-        mock_connection.is_new.side_effect = [True, False]
+        mock_connection.is_new.side_effect = [True, False, True, False]
         mock_connection.is_during_setup.return_value = False
-        mock_of_slicer.return_value = [[mock_packets, mock_packets], mock_data]
+        mock_of_slicer.return_value = [[mock_packets, mock_packets], b'']
         name = 'kytos/core.openflow.raw.in'
         content = {'source': mock_connection, 'new_data': mock_data}
         mock_event = get_kytos_event_mock(name=name, content=content)
@@ -239,6 +239,16 @@ class TestMain(TestCase):
         self.napp.handle_raw_in(mock_event)
         mock_negotiate.assert_called()
         mock_emit_message_in.assert_called()
+
+        # Test Fail
+        mock_negotiate.side_effect = NegotiationException('Foo')
+        self.napp.handle_raw_in(mock_event)
+        self.assertEqual(mock_connection.close.call_count, 1)
+
+        mock_connection.close.call_count = 0
+        mock_connection.protocol.unpack.side_effect = AttributeError()
+        self.napp.handle_raw_in(mock_event)
+        self.assertEqual(mock_connection.close.call_count, 1)
 
     @patch('napps.kytos.of_core.main.Main.update_port_status')
     @patch('napps.kytos.of_core.main.Main.update_links')
@@ -263,6 +273,15 @@ class TestMain(TestCase):
                                   msg_packet_in_mock)
         mock_update_links.assert_called_with(msg_packet_in_mock,
                                              mock_packet_in_connection)
+
+    @patch('napps.kytos.of_core.main.emit_message_out')
+    def test_emit_message_out(self, mock_emit_message_out):
+        """Test emit message_out."""
+        mock_connection = MagicMock()
+        mock_message = MagicMock()
+        mock_connection.is_alive.return_value = True
+        self.napp.emit_message_out(mock_connection, mock_message)
+        mock_emit_message_out.assert_called()
 
     @patch('pyof.utils.v0x04.symmetric.echo_reply.EchoReply')
     @patch('napps.kytos.of_core.main.Main.emit_message_out')
@@ -290,15 +309,27 @@ class TestMain(TestCase):
         (mock_version_header, mock_version_bitmask, mock_say_hello,
          mock_features_request) = args
         mock_version_header.return_value = 4
-        mock_version_bitmask.return_value = 4
+        mock_version_bitmask.side_effect = [4, None]
         mock_connection = MagicMock()
         mock_message = MagicMock()
-        mock_message.versions = 4
+        type(mock_message).versions = PropertyMock(side_effect=[4, 4, 4,
+                                                                False])
+
         self.napp._negotiate(mock_connection, mock_message)
         mock_version_bitmask.assert_called_with(mock_message.versions)
         mock_say_hello.assert_called_with(self.napp.controller,
                                           mock_connection)
         mock_features_request.assert_called_with(mock_connection)
+
+        self.napp._negotiate(mock_connection, mock_message)
+        mock_say_hello.assert_called_with(self.napp.controller,
+                                          mock_connection)
+        mock_features_request.assert_called_with(mock_connection)
+
+        # Test Fail
+        with self.assertRaises(NegotiationException):
+            type(mock_message).versions = PropertyMock(return_value=[4])
+            self.napp._negotiate(mock_connection, mock_message)
 
     @patch('pyof.utils.v0x04.asynchronous.error_msg.ErrorMsg')
     @patch('napps.kytos.of_core.main.Main.emit_message_out')
@@ -359,6 +390,12 @@ class TestMain(TestCase):
         self.napp.handle_openflow_in_hello_failed(mock_event)
         self.assertEqual(mock_event.destination.close.call_count, 1)
 
+    @patch('napps.kytos.of_core.main.log')
+    def test_shutdown(self, mock_log):
+        """Test shutdown."""
+        self.napp.shutdown()
+        self.assertEqual(mock_log.debug.call_count, 1)
+
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_core.main.Ethernet')
     def test_update_links(self, *args):
@@ -368,8 +405,10 @@ class TestMain(TestCase):
         ethernet.ether_type = "A"
         mock_ethernet.side_effect = ethernet
         mock_message = MagicMock()
-        mock_source = MagicMock()
-        self.napp.update_links(mock_message, mock_source)
+        mock_s = MagicMock()
+        mock_s.switch.get_interface_by_port_no.side_effect = [AttributeError(),
+                                                              True]
+        self.napp.update_links(mock_message, mock_s)
         mock_ethernet.assert_called()
         mock_buffer_put.assert_called()
 
@@ -410,6 +449,12 @@ class TestMain(TestCase):
 
         # check OFPRR_MODIFY
         mock_port_status.reason.enum_ref(1).name = 'OFPPR_MODIFY'
+        mock_source.switch.get_interface_by_port_no.return_value = False
+        self.napp.update_port_status(mock_port_status, mock_source)
+        mock_port_mod.assert_called()
+        mock_buffer_put.assert_called()
+
+        mock_source.switch.get_interface_by_port_no.return_value = MagicMock()
         self.napp.update_port_status(mock_port_status, mock_source)
         mock_port_mod.assert_called()
         mock_buffer_put.assert_called()
