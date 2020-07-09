@@ -15,8 +15,8 @@ class TestUtils(TestCase):
     def setUp(self):
         """Execute steps before each tests."""
         self.mock_controller = get_controller_mock()
-        self.mock_switch = get_switch_mock('00:00:00:00:00:00:00:01', 'v0x04')
-        self.mock_connection = get_connection_mock('v0x04', self.mock_switch)
+        self.mock_switch = get_switch_mock('00:00:00:00:00:00:00:01', 0x04)
+        self.mock_connection = get_connection_mock(0x04, self.mock_switch)
 
     def test_of_slicer(self):
         """Test of_slicer."""

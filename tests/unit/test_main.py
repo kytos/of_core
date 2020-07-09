@@ -21,8 +21,8 @@ class TestMain(TestCase):
         """Execute steps before each tests.
         Set the server_name_url from kytos/of_core
         """
-        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01", "v0x01")
-        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02", "v0x04")
+        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01", 0x01)
+        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02", 0x04)
         self.switch_v0x01.connection = get_connection_mock(
             0x01, get_switch_mock("00:00:00:00:00:00:00:03"))
         self.switch_v0x04.connection = get_connection_mock(
