@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from kytos.lib.helpers import get_switch_mock, get_connection_mock
 from napps.kytos.of_core.utils import (of_slicer, _emit_message, _unpack_int,
                                        emit_message_in, emit_message_out)
-
+from napps.kytos.of_core.utils import GenericHello
 from tests.helpers import get_controller_mock
 
 
@@ -54,3 +54,17 @@ class TestUtils(TestCase):
 
         emit_message_out(self.mock_controller, self.mock_connection, 'in')
         mock_message_in.assert_called()
+
+
+class TestGenericHello(TestCase):
+    """Test GenericHello."""
+
+    data = b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+
+    @patch('napps.kytos.of_core.utils.OFPTYPE')
+    def test_pack(self, mock_ofptype):
+        """Test pack."""
+        mock_ofptype.return_value = True
+        generic = GenericHello(packet=self.data, versions=b'\x04')
+        response = generic.pack()
+        self.assertEqual(self.data, response)
