@@ -277,9 +277,9 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
                  nw_dst=None, tp_src=None, tp_dst=None, in_phy_port=None,
                  ip_dscp=None, ip_ecn=None, udp_src=None, udp_dst=None,
                  icmpv4_type=None, icmpv4_code=None, arp_op=None,
-                 ipv6_flabel=None, icmpv6_type=None, icmpv6_code=None,
-                 nd_tar=None, nd_sll=None, nd_tll=None, pbb_isid=None,
-                 v6_hdr=None):
+                 ipv6_src=None, ipv6_dst=None, ipv6_flabel=None,
+                 icmpv6_type=None, icmpv6_code=None, nd_tar=None,
+                 nd_sll=None, nd_tll=None, pbb_isid=None, v6_hdr=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
@@ -302,6 +302,8 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.icmpv4_type = icmpv4_type
         self.icmpv4_code = icmpv4_code
         self.arp_op = arp_op
+        self.ipv6_src = ipv6_src
+        self.ipv6_dst = ipv6_dst
         self.ipv6_flabel = ipv6_flabel
         self.icmpv6_type = icmpv6_type
         self.icmpv6_code = icmpv6_code
