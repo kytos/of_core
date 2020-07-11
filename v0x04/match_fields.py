@@ -494,6 +494,62 @@ class MatchARPOP(MatchField):
         return cls(opcode)
 
 
+class MatchIPV6Src(MatchField):
+    """Match for IPV6 source."""
+
+    name = 'ipv6_src'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_SRC
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        ip_addr = IPV6Address(self.value)
+        value_bytes = ip_addr.pack()
+        if ip_addr.netmask < 128:
+            value_bytes += mask_to_bytes(ip_addr.netmask, 128)
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=ip_addr.netmask < 128,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        ip_address = IPV6Address()
+        ip_address.unpack(tlv.oxm_value)
+        addr_str = str(ip_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[16:], 128)}'
+        return cls(value)
+
+
+class MatchIPV6Dst(MatchField):
+    """Match for IPV6 destination."""
+
+    name = 'ipv6_dst'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_DST
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        ip_addr = IPV6Address(self.value)
+        value_bytes = ip_addr.pack()
+        if ip_addr.netmask < 128:
+            value_bytes += mask_to_bytes(ip_addr.netmask, 128)
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=ip_addr.netmask < 128,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        ip_address = IPV6Address()
+        ip_address.unpack(tlv.oxm_value)
+        addr_str = str(ip_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[16:], 128)}'
+        return cls(value)
+
+
 class MatchIPV6FLabel(MatchField):
     """Match for IPV6 Flow Label."""
 
