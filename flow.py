@@ -274,7 +274,8 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
-                 nw_dst=None, tp_src=None, tp_dst=None):
+                 nw_dst=None, tp_src=None, tp_dst=None, ipv6_src=None,
+                 ipv6_dst=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
         self.in_port = in_port
@@ -288,6 +289,8 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.nw_dst = nw_dst
         self.tp_src = tp_src
         self.tp_dst = tp_dst
+        self.ipv6_src = ipv6_src
+        self.ipv6_dst = ipv6_dst
 
     def as_dict(self):
         """Return a dictionary excluding ``None`` values."""
