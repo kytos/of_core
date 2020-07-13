@@ -604,7 +604,7 @@ class MatchMPLSTC(MatchField):
     """Match for MPLS TC."""
 
     name = 'mpls_tc'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFP_MPLS_TC
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_MPLS_TC
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
@@ -622,7 +622,7 @@ class MatchMPLSBOS(MatchField):
     """Match for MPLS BOS."""
 
     name = 'mpls_bos'
-    oxm_field = OxmOfbMatchField.OFPXMT_OFB_MPLS_BOS
+    oxm_field = OxmOfbMatchField.OFPXMT_OFP_MPLS_BOS
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
