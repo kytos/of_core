@@ -274,12 +274,13 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, in_port=None, dl_src=None, dl_dst=None, dl_vlan=None,
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
-                 nw_dst=None, tp_src=None, tp_dst=None, ipv6_src=None,
-                 ipv6_dst=None, arp_spa=None, arp_tpa=None, arp_sha=None, 
-                 arp_tha=None, mpls_lab=None, mpls_tc=None, mpls_bos=None,
-                 tun_id=None, metadata=None,sctp_src=None,sctp_dst=None):
+                 nw_dst=None, tp_src=None, tp_dst=None, sctp_src=None,
+                 sctp_dst=None, arp_spa=None, arp_tpa=None, arp_sha=None,
+                 arp_tha=None, ipv6_src=None, ipv6_dst=None, mpls_lab=None,
+                 mpls_tc=None, mpls_bos=None, metadata=None, tun_id=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-locals
         self.in_port = in_port
         self.dl_src = dl_src
         self.dl_dst = dl_dst
@@ -291,19 +292,19 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.nw_dst = nw_dst
         self.tp_src = tp_src
         self.tp_dst = tp_dst
-        self.ipv6_src = ipv6_src
-        self.ipv6_dst = ipv6_dst
+        self.sctp_src = sctp_src
+        self.sctp_dst = sctp_dst
         self.arp_spa = arp_spa
         self.arp_tpa = arp_tpa
         self.arp_sha = arp_sha
         self.arp_tha = arp_tha
+        self.ipv6_src = ipv6_src
+        self.ipv6_dst = ipv6_dst
         self.mpls_lab = mpls_lab
         self.mpls_tc = mpls_tc
         self.mpls_bos = mpls_bos
-        self.tun_id = tun_id
         self.metadata = metadata
-        self.sctp_src = sctp_src
-        self.sctp_dst = sctp_dst
+        self.tun_id = tun_id
 
     def as_dict(self):
         """Return a dictionary excluding ``None`` values."""
