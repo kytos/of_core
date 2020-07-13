@@ -303,7 +303,7 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.tun_id = tun_id
         self.metadata = metadata
         self.sctp_src = sctp_src
-        self.sctpdst = sctp_dst
+        self.sctp_dst = sctp_dst
 
     def as_dict(self):
         """Return a dictionary excluding ``None`` values."""
