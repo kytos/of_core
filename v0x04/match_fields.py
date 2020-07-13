@@ -631,7 +631,75 @@ class MatchTUNNELID(MatchField):
             value = f'{value}/{tunnel_mask}'
         return cls(value)
 
+    
+class MatchSCTPSrc(MatchField):
+    """Match for SCTP source."""
 
+    name = 'sctp_src'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_SCTP_SRC
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        priority = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(priority)
+
+
+class MatchSCTPDst(MatchField):
+    """Match for SCTP destination."""
+
+    name = 'sctp_dst'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_SCTP_DST
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(2, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        priority = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(priority)
+    
+    
+class MatchMetadata(MatchField):
+    """Match for table metadata."""
+
+    name = 'metadata'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_METADATA
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        try:
+            value = int(self.value)
+            mask = None
+            oxm_hasmask = False
+        except ValueError:
+            value, mask = map(int, self.value.split('/'))
+            oxm_hasmask = True
+        value_bytes = value.to_bytes(8, 'big')
+        if mask:
+            value_bytes += mask.to_bytes(8, 'big')
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value[:8], 'big')
+        if tlv.oxm_hasmask:
+            metadata_mask = int.from_bytes(tlv.oxm_value[8:], 'big')
+            value = f'{value}/{metadata_mask}'
+        return cls(value)
+    
+    
 class MatchFieldFactory(ABC):
     """Create the correct MatchField subclass instance.
 
