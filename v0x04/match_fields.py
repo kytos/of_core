@@ -545,6 +545,88 @@ class MatchARPTHA(MatchField):
             value = f'{addr_str}/{mask_str}'
         return cls(value)
 
+class MatchMPLSLabel(MatchField):
+    """Match for MPLS Label."""
+
+    name = 'mpls_lab'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_MPLS_LABEL
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(4, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+    
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        lab = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(lab)
+
+class MatchMPLSTC(MatchField):
+    """Match for MPLS TC."""
+
+    name = 'mpls_tc'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFP_MPLS_TC
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+    
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        tc = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(tc)
+
+class MatchMPLSBOS(MatchField):
+    """Match for MPLS BOS."""
+
+    name = 'mpls_bos'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_MPLS_BOS
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        value_bytes = self.value.to_bytes(1, 'big')
+        return OxmTLV(oxm_field=self.oxm_field, oxm_value=value_bytes)
+    
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        bos = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(bos)
+
+class MatchTUNNELID(MatchField):
+    """Match for tunnel id."""
+
+    name = 'tun_id'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_TUNNEL_ID
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        try:
+            value = int(self.value)
+            mask = None
+            oxm_hasmask = False
+        except ValueError:
+            value, mask = map(int,self.value.split('/'))
+            oxm_hasmask = True
+        value_bytes = value.to_bytes(8, 'big')
+        if mask:
+            value_bytes += mask.to_bytes(8, 'big')
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+    
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        value = int.from_bytes(tlv.oxm_value[:8], 'big')
+        if tlv.oxm_hasmask:
+            tunnel_mask = int.from_bytes(tlv.oxm_value[8:], 'big')
+            value = f'{value}/{tunnel_mask}'
+        return cls(value)
+
 
 class MatchFieldFactory(ABC):
     """Create the correct MatchField subclass instance.
