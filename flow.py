@@ -276,12 +276,13 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
                  dl_vlan_pcp=None, dl_type=None, nw_proto=None, nw_src=None,
                  nw_dst=None, tp_src=None, tp_dst=None, in_phy_port=None,
                  ip_dscp=None, ip_ecn=None, udp_src=None, udp_dst=None,
-                 icmpv4_type=None, icmpv4_code=None, arp_op=None,
-                 arp_spa=None, arp_tpa=None, arp_sha=None, arp_tha=None,
-                 ipv6_src=None, ipv6_dst=None, ipv6_flabel=None,
-                 icmpv6_type=None, icmpv6_code=None, nd_tar=None,
-                 nd_sll=None, nd_tll=None, mpls_lab=None, mpls_tc=None,
-                 mpls_bos=None, pbb_isid=None, v6_hdr=None, tun_id=None):
+                 sctp_src=None, sctp_dst=None, icmpv4_type=None,
+                 icmpv4_code=None, arp_op=None, arp_spa=None, arp_tpa=None,
+                 arp_sha=None, arp_tha=None, ipv6_src=None, ipv6_dst=None,
+                 ipv6_flabel=None, icmpv6_type=None, icmpv6_code=None,
+                 nd_tar=None, nd_sll=None, nd_tll=None, mpls_lab=None,
+                 mpls_tc=None, mpls_bos=None, pbb_isid=None, v6_hdr=None,
+                 metadata=None, tun_id=None):
         """Make it possible to set all attributes from the constructor."""
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
@@ -301,6 +302,8 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.ip_ecn = ip_ecn
         self.udp_src = udp_src
         self.udp_dst = udp_dst
+        self.sctp_src = sctp_src
+        self.sctp_dst = sctp_dst
         self.icmpv4_type = icmpv4_type
         self.icmpv4_code = icmpv4_code
         self.arp_op = arp_op
@@ -321,6 +324,7 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.mpls_bos = mpls_bos
         self.pbb_isid = pbb_isid
         self.v6_hdr = v6_hdr
+        self.metadata = metadata
         self.tun_id = tun_id
 
     def as_dict(self):
