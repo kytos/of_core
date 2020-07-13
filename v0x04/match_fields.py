@@ -494,6 +494,146 @@ class MatchARPOP(MatchField):
         return cls(opcode)
 
 
+class MatchARPSPA(MatchField):
+    """Match for ARP Sender IP Address."""
+
+    name = 'arp_spa'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ARP_SPA
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        ip_addr = IPAddress(self.value)
+        value_bytes = ip_addr.pack()
+        if ip_addr.netmask < 32:
+            value_bytes += mask_to_bytes(ip_addr.netmask, 32)
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=ip_addr.netmask < 32,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        ip_address = IPAddress()
+        ip_address.unpack(tlv.oxm_value)
+        addr_str = str(ip_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
+        return cls(value)
+
+
+class MatchARPTPA(MatchField):
+    """Match for ARP Target IP Address."""
+
+    name = 'arp_tpa'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ARP_TPA
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        ip_addr = IPAddress(self.value)
+        value_bytes = ip_addr.pack()
+        if ip_addr.netmask < 32:
+            value_bytes += mask_to_bytes(ip_addr.netmask, 32)
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=ip_addr.netmask < 32,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        ip_address = IPAddress()
+        ip_address.unpack(tlv.oxm_value)
+        addr_str = str(ip_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            value = f'{addr_str}/{bytes_to_mask(tlv.oxm_value[4:], 32)}'
+        return cls(value)
+
+
+class MatchARPSHA(MatchField):
+    """Match for ARP Sender MAC Address."""
+
+    name = 'arp_sha'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ARP_SHA
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        if '/' in self.value:
+            value, mask = self.value.split('/')
+            if mask.upper() == 'FF:FF:FF:FF:FF:FF':
+                mask = None
+                oxm_hasmask = False
+            else:
+                mask = mask.upper()
+                oxm_hasmask = True
+        else:
+            value = self.value
+            mask = None
+            oxm_hasmask = False
+        value_bytes = HWAddress(value).pack()
+        if mask:
+            value_bytes += HWAddress(mask).pack()
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        hw_address = HWAddress()
+        hw_address.unpack(tlv.oxm_value)
+        addr_str = str(hw_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            hw_mask = HWAddress()
+            hw_mask.unpack(tlv.oxm_value[6:])
+            mask_str = str(hw_mask)
+            value = f'{addr_str}/{mask_str}'
+        return cls(value)
+
+
+class MatchARPTHA(MatchField):
+    """Match for ARP Target MAC Address."""
+
+    name = 'arp_tha'
+    oxm_field = OxmOfbMatchField.OFPXMT_OFB_ARP_THA
+
+    def as_of_tlv(self):
+        """Return a pyof OXM TLV instance."""
+        if '/' in self.value:
+            value, mask = self.value.split('/')
+            if mask.upper() == 'FF:FF:FF:FF:FF:FF':
+                mask = None
+                oxm_hasmask = False
+            else:
+                mask = mask.upper()
+                oxm_hasmask = True
+        else:
+            value = self.value
+            mask = None
+            oxm_hasmask = False
+        value_bytes = HWAddress(value).pack()
+        if mask:
+            value_bytes += HWAddress(mask).pack()
+        return OxmTLV(oxm_field=self.oxm_field,
+                      oxm_hasmask=oxm_hasmask,
+                      oxm_value=value_bytes)
+
+    @classmethod
+    def from_of_tlv(cls, tlv):
+        """Return an instance from a pyof OXM TLV."""
+        hw_address = HWAddress()
+        hw_address.unpack(tlv.oxm_value)
+        addr_str = str(hw_address)
+        value = addr_str
+        if tlv.oxm_hasmask:
+            hw_mask = HWAddress()
+            hw_mask.unpack(tlv.oxm_value[6:])
+            mask_str = str(hw_mask)
+            value = f'{addr_str}/{mask_str}'
+        return cls(value)
+
+
 class MatchIPV6Src(MatchField):
     """Match for IPV6 source."""
 
