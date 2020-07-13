@@ -1011,7 +1011,7 @@ class MatchTUNNELID(MatchField):
             mask = None
             oxm_hasmask = False
         except ValueError:
-            value, mask = map(int, self.value.split('/'))
+            value, mask = map(int,self.value.split('/'))
             oxm_hasmask = True
         value_bytes = value.to_bytes(8, 'big')
         if mask:
