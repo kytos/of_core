@@ -614,8 +614,8 @@ class MatchMPLSTC(MatchField):
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        tc = int.from_bytes(tlv.oxm_value, 'big')
-        return cls(tc)
+        value = int.from_bytes(tlv.oxm_value, 'big')
+        return cls(value)
 
 
 class MatchMPLSBOS(MatchField):
@@ -681,7 +681,7 @@ class MatchTunnelID(MatchField):
             mask = None
             oxm_hasmask = False
         except ValueError:
-            value, mask = map(int,self.value.split('/'))
+            value, mask = map(int, self.value.split('/'))
             oxm_hasmask = True
         value_bytes = value.to_bytes(8, 'big')
         if mask:
