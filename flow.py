@@ -277,6 +277,7 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
                  nw_dst=None, tp_src=None, tp_dst=None, in_phy_port=None,
                  ip_dscp=None, ip_ecn=None, udp_src=None, udp_dst=None,
                  icmpv4_type=None, icmpv4_code=None, arp_op=None,
+                 arp_spa=None, arp_tpa=None, arp_sha=None, arp_tha=None,
                  ipv6_src=None, ipv6_dst=None, ipv6_flabel=None,
                  icmpv6_type=None, icmpv6_code=None, nd_tar=None,
                  nd_sll=None, nd_tll=None, pbb_isid=None, v6_hdr=None):
@@ -302,6 +303,10 @@ class MatchBase:  # pylint: disable=too-many-instance-attributes
         self.icmpv4_type = icmpv4_type
         self.icmpv4_code = icmpv4_code
         self.arp_op = arp_op
+        self.arp_spa = arp_spa
+        self.arp_tpa = arp_tpa
+        self.arp_sha = arp_sha
+        self.arp_tha = arp_tha
         self.ipv6_src = ipv6_src
         self.ipv6_dst = ipv6_dst
         self.ipv6_flabel = ipv6_flabel
