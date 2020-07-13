@@ -545,6 +545,7 @@ class MatchARPTHA(MatchField):
             value = f'{addr_str}/{mask_str}'
         return cls(value)
 
+
 class MatchMPLSLabel(MatchField):
     """Match for MPLS Label."""
 
@@ -561,6 +562,7 @@ class MatchMPLSLabel(MatchField):
         """Return an instance from a pyof OXM TLV."""
         lab = int.from_bytes(tlv.oxm_value, 'big')
         return cls(lab)
+
 
 class MatchMPLSTC(MatchField):
     """Match for MPLS TC."""
@@ -579,6 +581,7 @@ class MatchMPLSTC(MatchField):
         tc = int.from_bytes(tlv.oxm_value, 'big')
         return cls(tc)
 
+
 class MatchMPLSBOS(MatchField):
     """Match for MPLS BOS."""
 
@@ -595,6 +598,7 @@ class MatchMPLSBOS(MatchField):
         """Return an instance from a pyof OXM TLV."""
         bos = int.from_bytes(tlv.oxm_value, 'big')
         return cls(bos)
+
 
 class MatchTUNNELID(MatchField):
     """Match for tunnel id."""
