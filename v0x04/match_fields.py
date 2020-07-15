@@ -130,11 +130,11 @@ class MatchDLSrc(MatchField):
         """Return a pyof OXM TLV instance."""
         if '/' in self.value:
             value, mask = self.value.split('/')
-            if mask.upper() == 'FF:FF:FF:FF:FF:FF':
+            mask = mask.upper()
+            if mask == 'FF:FF:FF:FF:FF:FF':
                 mask = None
                 oxm_hasmask = False
             else:
-                mask = mask.upper()
                 oxm_hasmask = True
         else:
             value = self.value
