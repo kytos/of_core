@@ -3,27 +3,48 @@ Changelog
 #########
 All notable changes to the of_core NApp will be documented in this file.
 
-[UNRELEASED] - Under development
+[unreleased] - under development
 ********************************
 
-Added
+added
 =====
-- Added new unit tests, increasing coverage to 47%.
-- Added '.travis.yml' to enable Travis CI.
-- Added tags decorator to run tests by type and size.
-Changed
+
+changed
 =======
 
-Deprecated
+deprecated
 ==========
 
-Removed
+removed
 =======
 
-Fixed
+fixed
 =====
 
-Security
+security
+========
+
+[1.4.2] - 2020-07-21
+********************************
+
+added
+=====
+- added new fields on openflow 1.3. 
+- added new unit tests, increasing coverage to 85%.
+
+changed
+=======
+
+deprecated
+==========
+
+removed
+=======
+
+fixed
+=====
+
+security
 ========
 
 [1.4.1] - 2020-05-19
