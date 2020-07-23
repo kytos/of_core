@@ -13,7 +13,7 @@ from subprocess import CalledProcessError, call, check_call
 
 from setuptools import Command, setup
 from setuptools.command.develop import develop
-# from setuptools.command.egg_info import egg_info
+from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
 
 if 'bdist_wheel' in sys.argv:
@@ -181,20 +181,20 @@ class InstallMode(install):
         print(self.description)
 
 
-# class EggInfo(egg_info):
-#     """Prepare files to be packed."""
-#
-#     def run(self):
-#         """Build css."""
-#         self._install_deps_wheels()
-#         super().run()
-#
-#     @staticmethod
-#     def _install_deps_wheels():
-#         """Python wheels are much faster (no compiling)."""
-#         print('Installing dependencies...')
-#         check_call([sys.executable, '-m', 'pip', 'install', '-r',
-#                     'requirements/run.in'])
+class EggInfo(egg_info):
+    """Prepare files to be packed."""
+
+    def run(self):
+        """Build css."""
+        self._install_deps_wheels()
+        super().run()
+
+    @staticmethod
+    def _install_deps_wheels():
+        """Python wheels are much faster (no compiling)."""
+        print('Installing dependencies...')
+        check_call([sys.executable, '-m', 'pip', 'install', '-r',
+                    'requirements/run.in'])
 
 
 class DevelopMode(develop):
@@ -285,8 +285,8 @@ setup(name='kytos_of_core',
           'develop': DevelopMode,
           'install': InstallMode,
           'lint': Linter,
+          'egg_info': EggInfo,
           'test': Test,
-          # 'egg_info': EggInfo,
       },
       zip_safe=False,
       classifiers=[
