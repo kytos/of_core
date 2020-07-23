@@ -9,7 +9,7 @@ make the OF 1.3 match fields easy to use and to be coded.
 """
 from abc import ABC, abstractmethod
 
-from pyof.foundation.basic_types import HWAddress, IPAddress
+from pyof.foundation.basic_types import HWAddress, IPAddress, IPV6Address
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
 
 from napps.kytos.of_core.v0x04.utils import bytes_to_mask, mask_to_bytes
