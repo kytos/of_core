@@ -11,7 +11,6 @@ Added
 
 Changed
 =======
-- Updated .coveragerc to ignore .eggs in tests 
 
 Deprecated
 ==========
@@ -24,6 +23,25 @@ Fixed
 
 Security
 ========
+
+
+[1.5.0] - 2020-07-23
+********************
+
+Added
+=====
+- Added new fields on OpenFlow 1.3. 
+- Added new unit tests.
+
+Changed
+=======
+- Updated .coveragerc to ignore .eggs in tests.
+
+Fixed
+=====
+- Fixed handle_port_desc method, now Interface instances are created using
+  speed attribute.
+
 
 [1.4.1] - 2020-05-19
 ********************
