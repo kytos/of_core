@@ -9,7 +9,7 @@ make the OF 1.3 match fields easy to use and to be coded.
 """
 from abc import ABC, abstractmethod
 
-from pyof.foundation.basic_types import HWAddress, IPAddress, IPV6Address
+from pyof.foundation.basic_types import HWAddress, IPAddress, IPv6Address
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
 
 from napps.kytos.of_core.v0x04.utils import bytes_to_mask, mask_to_bytes
@@ -670,15 +670,15 @@ class MatchARPTHA(MatchField):
         return cls(value)
 
 
-class MatchIPV6Src(MatchField):
-    """Match for IPV6 source."""
+class MatchIPv6Src(MatchField):
+    """Match for IPv6 source."""
 
     name = 'ipv6_src'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_SRC
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        ip_addr = IPV6Address(self.value)
+        ip_addr = IPv6Address(self.value)
         value_bytes = ip_addr.pack()
         if ip_addr.netmask < 128:
             value_bytes += mask_to_bytes(ip_addr.netmask, 128)
@@ -689,7 +689,7 @@ class MatchIPV6Src(MatchField):
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        ip_address = IPV6Address()
+        ip_address = IPv6Address()
         ip_address.unpack(tlv.oxm_value)
         addr_str = str(ip_address)
         value = addr_str
@@ -698,15 +698,15 @@ class MatchIPV6Src(MatchField):
         return cls(value)
 
 
-class MatchIPV6Dst(MatchField):
-    """Match for IPV6 destination."""
+class MatchIPv6Dst(MatchField):
+    """Match for IPv6 destination."""
 
     name = 'ipv6_dst'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_DST
 
     def as_of_tlv(self):
         """Return a pyof OXM TLV instance."""
-        ip_addr = IPV6Address(self.value)
+        ip_addr = IPv6Address(self.value)
         value_bytes = ip_addr.pack()
         if ip_addr.netmask < 128:
             value_bytes += mask_to_bytes(ip_addr.netmask, 128)
@@ -717,7 +717,7 @@ class MatchIPV6Dst(MatchField):
     @classmethod
     def from_of_tlv(cls, tlv):
         """Return an instance from a pyof OXM TLV."""
-        ip_address = IPV6Address()
+        ip_address = IPv6Address()
         ip_address.unpack(tlv.oxm_value)
         addr_str = str(ip_address)
         value = addr_str
@@ -726,8 +726,8 @@ class MatchIPV6Dst(MatchField):
         return cls(value)
 
 
-class MatchIPV6FLabel(MatchField):
-    """Match for IPV6 Flow Label."""
+class MatchIPv6FLabel(MatchField):
+    """Match for IPv6 Flow Label."""
 
     name = 'ipv6_flabel'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_FLABEL
@@ -795,7 +795,7 @@ class MatchICMPV6Code(MatchField):
 
 
 class MatchNDTarget(MatchField):
-    """Match for IPV6 ND Target."""
+    """Match for IPv6 ND Target."""
 
     name = 'nd_tar'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_TARGET
@@ -813,7 +813,7 @@ class MatchNDTarget(MatchField):
 
 
 class MatchNDSLL(MatchField):
-    """Match for IPV6 ND SLL."""
+    """Match for IPv6 ND SLL."""
 
     name = 'nd_sll'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_SLL
@@ -831,7 +831,7 @@ class MatchNDSLL(MatchField):
 
 
 class MatchNDTLL(MatchField):
-    """Match for IPV6 ND TLL."""
+    """Match for IPv6 ND TLL."""
 
     name = 'nd_tll'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_ND_TLL
@@ -935,7 +935,7 @@ class MatchPBBISID(MatchField):
 
 
 class MatchEXTHDR(MatchField):
-    """Match for IPV6 EXTHDR."""
+    """Match for IPv6 EXTHDR."""
 
     name = 'v6_hdr'
     oxm_field = OxmOfbMatchField.OFPXMT_OFB_IPV6_EXTHDR
