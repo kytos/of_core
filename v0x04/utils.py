@@ -85,13 +85,15 @@ def handle_port_desc(controller, switch, port_list):
             interface.address = port.hw_addr.value
             interface.state = port.state.value
             interface.features = port.curr
+            interface.set_custom_speed(port.curr_speed.value)
         else:
             interface = Interface(name=port.name.value,
                                   address=port.hw_addr.value,
                                   port_number=port.port_no.value,
                                   switch=switch,
                                   state=port.state.value,
-                                  features=port.curr)
+                                  features=port.curr,
+                                  speed=port.curr_speed.value)
         switch.update_interface(interface)
         port_event = KytosEvent(name='kytos/of_core.switch.port.created',
                                 content={
