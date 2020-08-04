@@ -28,6 +28,7 @@ class Main(KytosNApp):
     # Assume that all replies are received before setting a new xid.
     _multipart_replies_xids = {}
     _multipart_replies_flows = {}
+    _multipart_replies_ports = {}
 
     def setup(self):
         """App initialization (used instead of ``__init__``).
@@ -59,13 +60,17 @@ class Main(KytosNApp):
         of_version = switch.connection.protocol.version
         if of_version == 0x01:
             of_core_v0x01_utils.update_flow_list(self.controller, switch)
+            of_core_v0x01_utils.request_port_stats(self.controller, switch)
         elif of_version == 0x04:
-            xid = of_core_v0x04_utils.update_flow_list(self.controller, switch)
-            self._multipart_replies_xids[switch.id] = xid
+            xid_flows = of_core_v0x04_utils.update_flow_list(self.controller,
+                                                             switch)
+            xid_ports = of_core_v0x04_utils.request_port_stats(self.controller,
+                                                               switch)
+            self._multipart_replies_xids[switch.id] = {'flows': xid_flows,
+                                                       'ports': xid_ports}
 
-    @staticmethod
     @listen_to('kytos/of_core.v0x01.messages.in.ofpt_stats_reply')
-    def handle_stats_reply(event):
+    def handle_stats_reply(self, event):
         """Handle stats replies for v0x01 switches.
 
         Args:
@@ -77,6 +82,15 @@ class Main(KytosNApp):
         if msg.body_type == StatsType.OFPST_FLOW:
             switch.flows = [Flow01.from_of_flow_stats(f, switch)
                             for f in msg.body]
+        elif msg.body_type == StatsType.OFPST_PORT:
+            port_stats = [of_port_stats for of_port_stats in msg.body]
+            port_stats_event = KytosEvent(
+                name=f"kytos/of_core.port_stats",
+                content={
+                    'switch': switch,
+                    'port_stats': port_stats
+                    })
+            self.controller.buffers.app.put(port_stats_event)
         elif msg.body_type == StatsType.OFPST_DESC:
             switch.update_description(msg.body)
 
@@ -120,6 +134,8 @@ class Main(KytosNApp):
 
         if reply.multipart_type == MultipartType.OFPMP_FLOW:
             self._handle_multipart_flow_stats(reply, switch)
+        elif reply.multipart_type == MultipartType.OFPMP_PORT_STATS:
+            self._handle_multipart_port_stats(reply, switch)
         elif reply.multipart_type == MultipartType.OFPMP_PORT_DESC:
             of_core_v0x04_utils.handle_port_desc(self.controller, switch,
                                                  reply.body)
@@ -128,7 +144,7 @@ class Main(KytosNApp):
 
     def _handle_multipart_flow_stats(self, reply, switch):
         """Update switch flows after all replies are received."""
-        if self._is_multipart_reply_ours(reply, switch):
+        if self._is_multipart_reply_ours(reply, switch, 'flows'):
             # Get all flows from the reply
             flows = [Flow04.from_of_flow_stats(of_flow_stats, switch)
                      for of_flow_stats in reply.body]
@@ -138,16 +154,40 @@ class Main(KytosNApp):
             if reply.flags.value % 2 == 0:  # Last bit means more replies
                 self._update_switch_flows(switch)
 
+    def _handle_multipart_port_stats(self, reply, switch):
+        """Emit an event about new port stats."""
+        if self._is_multipart_reply_ours(reply, switch, 'ports'):
+            port_stats = [of_port_stats for of_port_stats in reply.body]
+            all_port_stats = self._multipart_replies_ports.setdefault(
+                switch.id, []
+            )
+            all_port_stats.extend(port_stats)
+            if reply.flags.value % 2 == 0:
+                self._new_port_stats(switch)
+
     def _update_switch_flows(self, switch):
         """Update controllers' switch flow list and clean resources."""
         switch.flows = self._multipart_replies_flows[switch.id]
         del self._multipart_replies_flows[switch.id]
-        del self._multipart_replies_xids[switch.id]
+        del self._multipart_replies_xids[switch.id]['flows']
 
-    def _is_multipart_reply_ours(self, reply, switch):
+    def _new_port_stats(self, switch):
+        """Send an event with the new port stats and clean resources."""
+        all_port_stats = self._multipart_replies_ports[switch.id]
+        del self._multipart_replies_ports[switch.id]
+        del self._multipart_replies_xids[switch.id]['ports']
+        port_stats_event = KytosEvent(
+            name=f"kytos/of_core.port_stats",
+            content={
+                'switch': switch,
+                'port_stats': all_port_stats
+                })
+        self.controller.buffers.app.put(port_stats_event)
+
+    def _is_multipart_reply_ours(self, reply, switch, stat):
         """Return whether we are expecting the reply."""
         if switch.id in self._multipart_replies_xids:
-            sent_xid = self._multipart_replies_xids[switch.id]
+            sent_xid = self._multipart_replies_xids[switch.id].get(stat)
             if sent_xid == reply.header.xid:
                 return True
         return False
