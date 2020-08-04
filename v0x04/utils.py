@@ -141,9 +141,7 @@ def mask_to_bytes(mask, size):
 def bytes_to_mask(tobytes, size):
     """Return the mask in string."""
     int_mask = int.from_bytes(tobytes, 'big')
-    bits = bin(int_mask)
-    strbits = str(bits)
-    strbits = strbits[2:]
+    strbits = format(int_mask, 'b')
     netmask = 0
     for i in range(size):
         if strbits[i] == '1':
