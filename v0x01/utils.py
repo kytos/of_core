@@ -1,5 +1,6 @@
 """Utilities module for of_core OpenFlow v0x01 operations."""
-from pyof.v0x01.controller2switch.common import ConfigFlag, FlowStatsRequest, PortStatsRequest
+from pyof.v0x01.controller2switch.common import (ConfigFlag, FlowStatsRequest,
+                                                 PortStatsRequest)
 from pyof.v0x01.controller2switch.set_config import SetConfig
 from pyof.v0x01.controller2switch.stats_request import StatsRequest, StatsType
 from pyof.v0x01.symmetric.echo_request import EchoRequest
@@ -26,8 +27,10 @@ def update_flow_list(controller, switch):
     # req.pack()
     emit_message_out(controller, switch.connection, stats_request)
 
+
 def request_port_stats(controller, switch):
     """Request port stats from switches.
+
     Args:
         controller(:class:`~kytos.core.controller.Controller`):
             the controller being used.
@@ -40,6 +43,7 @@ def request_port_stats(controller, switch):
         body=body)
     # req.pack()
     emit_message_out(controller, switch.connection, stats_request)
+
 
 def send_desc_request(controller, switch):
     """Send a description request to the switch.

@@ -252,12 +252,12 @@ class TestMain(TestCase):
         mock_connection.protocol.unpack.side_effect = AttributeError()
         self.napp.handle_raw_in(mock_event)
         self.assertEqual(mock_connection.close.call_count, 1)
-        
+
     @patch('napps.kytos.of_core.main.Main._new_port_stats')
     @patch('napps.kytos.of_core.main.Main._is_multipart_reply_ours')
     def test_handle_multipart_port_stats(self, *args):
         """Test handle multipart flow stats."""
-        (mock_is_multipart_reply_ours, 
+        (mock_is_multipart_reply_ours,
          mock_new_port_stats) = args
         mock_is_multipart_reply_ours.return_value = True
 
@@ -266,7 +266,8 @@ class TestMain(TestCase):
         port_stats_msg.flags.value = 2
         port_stats_msg.multipart_type = MultipartType.OFPMP_PORT_STATS
 
-        self.napp._handle_multipart_port_stats(port_stats_msg, self.switch_v0x04)
+        self.napp._handle_multipart_port_stats(port_stats_msg,
+                                               self.switch_v0x04)
 
         mock_is_multipart_reply_ours.assert_called_with(port_stats_msg,
                                                         self.switch_v0x04,

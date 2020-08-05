@@ -2,8 +2,8 @@
 from pyof.v0x04.common.action import ControllerMaxLen
 from pyof.v0x04.controller2switch.common import ConfigFlag, MultipartType
 from pyof.v0x04.controller2switch.multipart_request import (FlowStatsRequest,
-                                                            PortStatsRequest,
-                                                            MultipartRequest)
+                                                            MultipartRequest,
+                                                            PortStatsRequest)
 from pyof.v0x04.controller2switch.set_config import SetConfig
 from pyof.v0x04.symmetric.echo_request import EchoRequest
 from pyof.v0x04.symmetric.hello import Hello
@@ -32,6 +32,7 @@ def update_flow_list(controller, switch):
     emit_message_out(controller, switch.connection, multipart_request)
     return multipart_request.header.xid
 
+
 def request_port_stats(controller, switch):
     """Request port stats from switches.
 
@@ -50,6 +51,7 @@ def request_port_stats(controller, switch):
     multipart_request.body = PortStatsRequest()
     emit_message_out(controller, switch.connection, multipart_request)
     return multipart_request.header.xid
+
 
 def send_desc_request(controller, switch):
     """Request vendor-specific switch description.
