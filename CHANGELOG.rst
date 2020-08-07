@@ -25,12 +25,14 @@ Security
 ========
 
 
-[1.5.0] - 2020-07-23
-********************
+[1.5] - 2020-07-23
+******************
 
 Added
 =====
-- Added new fields on OpenFlow 1.3. 
+- Added new fields for OpenFlow 1.3, including SCTP source/destination,
+  ARP SPA/TPA/SHA/THA, IPv6 source/destination, MPLS label/TC/BOS,
+  Metadata and Tunnel ID match fields.
 - Added new unit tests.
 
 Changed
@@ -39,8 +41,8 @@ Changed
 
 Fixed
 =====
-- Fixed handle_port_desc method, now Interface instances are created using
-  speed attribute.
+- Fixed the ``handle_port_desc`` method. Now ``Interface`` instances are
+  created using the speed attribute.
 
 
 [1.4.1] - 2020-05-19
