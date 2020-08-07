@@ -8,9 +8,7 @@ All notable changes to the of_core NApp will be documented in this file.
 
 Added
 =====
-- Added new unit tests, increasing coverage to 47%.
-- Added '.travis.yml' to enable Travis CI.
-- Added tags decorator to run tests by type and size.
+
 Changed
 =======
 
@@ -25,6 +23,27 @@ Fixed
 
 Security
 ========
+
+
+[1.5] - 2020-07-23
+******************
+
+Added
+=====
+- Added new fields for OpenFlow 1.3, including SCTP source/destination,
+  ARP SPA/TPA/SHA/THA, IPv6 source/destination, MPLS label/TC/BOS,
+  Metadata and Tunnel ID match fields.
+- Added new unit tests.
+
+Changed
+=======
+- Updated .coveragerc to ignore .eggs in tests.
+
+Fixed
+=====
+- Fixed the ``handle_port_desc`` method. Now ``Interface`` instances are
+  created using the speed attribute.
+
 
 [1.4.1] - 2020-05-19
 ********************
