@@ -3,8 +3,12 @@
 from pyof.foundation.exceptions import UnpackException
 from pyof.foundation.network_types import Ethernet, EtherType
 from pyof.utils import PYOF_VERSION_LIBS, unpack
+from pyof.v0x01.asynchronous.error_msg import BadActionCode as BadActionCode01
 from pyof.v0x01.common.header import Type
+from pyof.v0x01.common.phy_port import PortConfig as PortConfig01
 from pyof.v0x01.controller2switch.common import StatsType
+from pyof.v0x04.asynchronous.error_msg import BadActionCode as BadActionCode04
+from pyof.v0x04.common.port import PortConfig as PortConfig04
 from pyof.v0x04.controller2switch.common import MultipartType
 
 from kytos.core import KytosEvent, KytosNApp, log
@@ -201,7 +205,8 @@ class Main(KytosNApp):
             try:
                 message = connection.protocol.unpack(packet)
                 if message.header.message_type == Type.OFPT_ERROR:
-                    log.error(f"OFPT_ERROR: {str(message.code)}")
+                    self.handle_error_message(connection, message)
+
             except (UnpackException, AttributeError) as err:
                 log.error(err)
                 if isinstance(err, AttributeError):
@@ -247,6 +252,36 @@ class Main(KytosNApp):
         """Emit a KytosEvent for each outgoing message."""
         if connection.is_alive():
             emit_message_out(self.controller, connection, message)
+
+    @staticmethod
+    def handle_error_message(connection, message):
+        """Handle error messages.
+
+        This method will get an error message, display the code and if
+        necessary, read the error package and deal with it.
+        """
+        log.error(f"OFPT_ERROR: {str(message.code)}")
+
+        switch = connection.switch
+        error_data = message.data.pack()
+        # Get the packet responsible for the error
+        error_packet = connection.protocol.unpack(error_data)
+
+        if (message.code == BadActionCode01.OFPBAC_BAD_OUT_PORT or
+           message.code == BadActionCode04.OFPBAC_BAD_OUT_PORT):
+
+            for action in error_packet.actions:
+                try:
+                    iface = switch.get_interface_by_port_no(action.port.value)
+                except AttributeError:
+                    iface = switch.get_interface_by_port_no(action.port)
+
+                # Check interface to drop packets forwarded to it
+                if iface:
+                    if connection.protocol.version == 0x01:
+                        iface.config = PortConfig01.OFPPC_NO_FWD
+                    elif connection.protocol.version == 0x04:
+                        iface.config = PortConfig04.OFPPC_NO_FWD
 
     @listen_to('kytos/of_core.v0x0[14].messages.in.ofpt_echo_request')
     def handle_echo_request(self, event):
