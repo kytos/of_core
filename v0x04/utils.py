@@ -1,5 +1,6 @@
 """Utilities module for of_core OpenFlow v0x04 operations."""
 from pyof.v0x04.common.action import ControllerMaxLen
+from pyof.v0x04.common.port import PortConfig
 from pyof.v0x04.controller2switch.common import ConfigFlag, MultipartType
 from pyof.v0x04.controller2switch.multipart_request import (FlowStatsRequest,
                                                             MultipartRequest)
@@ -80,11 +81,18 @@ def handle_port_desc(controller, switch, port_list):
     """Update interfaces on switch based on port_list information."""
     for port in port_list:
         interface = switch.get_interface_by_port_no(port.port_no.value)
+        config = port.config
+        if (port.supported == 0 and
+                port.curr_speed.value == 0 and
+                port.max_speed.value == 0):
+            config = PortConfig.OFPPC_NO_FWD
+
         if interface:
             interface.name = port.name.value
             interface.address = port.hw_addr.value
             interface.state = port.state.value
             interface.features = port.curr
+            interface.config = config
             interface.set_custom_speed(port.curr_speed.value)
         else:
             interface = Interface(name=port.name.value,
@@ -93,7 +101,8 @@ def handle_port_desc(controller, switch, port_list):
                                   switch=switch,
                                   state=port.state.value,
                                   features=port.curr,
-                                  speed=port.curr_speed.value)
+                                  speed=port.curr_speed.value,
+                                  config=config)
         switch.update_interface(interface)
         port_event = KytosEvent(name='kytos/of_core.switch.port.created',
                                 content={
