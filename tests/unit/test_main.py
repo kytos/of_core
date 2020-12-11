@@ -187,7 +187,8 @@ class TestMain(TestCase):
         self.napp._handle_multipart_flow_stats(flow_msg, self.switch_v0x04)
 
         mock_is_multipart_reply_ours.assert_called_with(flow_msg,
-                                                        self.switch_v0x04)
+                                                        self.switch_v0x04,
+                                                        'flows')
         mock_from_of_flow_stats_v0x01.assert_called_with(flow_msg.body,
                                                          self.switch_v0x04)
         mock_update_switch_flows.assert_called_with(self.switch_v0x04)
@@ -198,9 +199,9 @@ class TestMain(TestCase):
         mock_switch = get_switch_mock(dpid)
         mock_switch.id = dpid
         self.napp._multipart_replies_flows = {dpid: mock_switch}
-        self.napp._multipart_replies_xids = {dpid: mock_switch}
+        self.napp._multipart_replies_xids = {dpid: {'flows': mock_switch}}
         self.napp._update_switch_flows(mock_switch)
-        self.assertEqual(self.napp._multipart_replies_xids, {})
+        self.assertEqual(self.napp._multipart_replies_xids, {dpid: {}})
         self.assertEqual(self.napp._multipart_replies_flows, {})
 
     def test_is_multipart_reply_ours(self):
@@ -212,11 +213,13 @@ class TestMain(TestCase):
         mock_reply.header.xid = mock_switch
         type(mock_switch).id = PropertyMock(side_effect=[dpid_a,
                                                          dpid_a, dpid_b])
-        self.napp._multipart_replies_xids = {dpid_a: mock_switch}
-        response = self.napp._is_multipart_reply_ours(mock_reply, mock_switch)
+        self.napp._multipart_replies_xids = {dpid_a: {'flows': mock_switch}}
+        response = self.napp._is_multipart_reply_ours(
+            mock_reply, mock_switch, 'flows')
         self.assertEqual(response, True)
 
-        response = self.napp._is_multipart_reply_ours(mock_reply, mock_switch)
+        response = self.napp._is_multipart_reply_ours(
+            mock_reply, mock_switch, 'flows')
         self.assertEqual(response, False)
 
     @patch('napps.kytos.of_core.main.of_slicer')
@@ -249,6 +252,27 @@ class TestMain(TestCase):
         mock_connection.protocol.unpack.side_effect = AttributeError()
         self.napp.handle_raw_in(mock_event)
         self.assertEqual(mock_connection.close.call_count, 1)
+
+    @patch('napps.kytos.of_core.main.Main._new_port_stats')
+    @patch('napps.kytos.of_core.main.Main._is_multipart_reply_ours')
+    def test_handle_multipart_port_stats(self, *args):
+        """Test handle multipart flow stats."""
+        (mock_is_multipart_reply_ours,
+         mock_new_port_stats) = args
+        mock_is_multipart_reply_ours.return_value = True
+
+        port_stats_msg = MagicMock()
+        port_stats_msg.body = "A"
+        port_stats_msg.flags.value = 2
+        port_stats_msg.multipart_type = MultipartType.OFPMP_PORT_STATS
+
+        self.napp._handle_multipart_port_stats(port_stats_msg,
+                                               self.switch_v0x04)
+
+        mock_is_multipart_reply_ours.assert_called_with(port_stats_msg,
+                                                        self.switch_v0x04,
+                                                        'ports')
+        mock_new_port_stats.assert_called_with(self.switch_v0x04)
 
     @patch('napps.kytos.of_core.main.Main.update_port_status')
     @patch('napps.kytos.of_core.main.Main.update_links')
