@@ -2,8 +2,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-
-from kytos.lib.helpers import get_switch_mock, get_connection_mock
+from kytos.lib.helpers import get_connection_mock, get_switch_mock
 from napps.kytos.of_core.v0x01.flow import Flow as Flow01
 from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 
@@ -23,7 +22,7 @@ class TestFlowFactory(TestCase):
             0x04, get_switch_mock("00:00:00:00:00:00:00:04"))
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
-        # pylint: disable=bad-option-value
+        # pylint: disable=import-outside-toplevel
         from napps.kytos.of_core.flow import FlowFactory
         self.addCleanup(patch.stopall)
 

@@ -1,6 +1,6 @@
 """Test Match abstraction for v0x01 and v0x04."""
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from napps.kytos.of_core.v0x01.flow import Match as Match01
 from napps.kytos.of_core.v0x04.flow import Match as Match04

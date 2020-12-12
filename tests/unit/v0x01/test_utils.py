@@ -1,12 +1,11 @@
 """Test v0x01.utils methods."""
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
-from kytos.lib.helpers import get_switch_mock, get_connection_mock
-from napps.kytos.of_core.v0x01.utils import (send_desc_request, send_echo,
-                                             say_hello, send_set_config,
-                                             handle_features_reply)
-
+from kytos.lib.helpers import get_connection_mock, get_switch_mock
+from napps.kytos.of_core.v0x01.utils import (handle_features_reply, say_hello,
+                                             send_desc_request, send_echo,
+                                             send_set_config)
 from tests.helpers import get_controller_mock
 
 
