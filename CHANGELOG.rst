@@ -24,6 +24,20 @@ Fixed
 Security
 ========
 
+[1.5.1] - 2020-12-23
+********************
+
+Added
+=====
+- Added support for requesting port statistics.
+
+Changed
+=======
+- Changed setup.py to alert when a test fails on Travis.
+- Changed the behavior of handle_port_desc method, 
+  defining OFPPC_NO_FWD flag to interfaces that kytos 
+  should not send packets.
+
 
 [1.5] - 2020-07-23
 ******************
