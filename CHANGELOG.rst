@@ -33,10 +33,10 @@ Added
 
 Changed
 =======
-- Changed setup.py to alert when a test fails on Travis.
-- Changed the behavior of handle_port_desc method, 
-  defining OFPPC_NO_FWD flag to interfaces that kytos 
-  should not send packets.
+- Changed ``setup.py`` to alert when a test fails on Travis.
+- Changed the behavior of the ``handle_port_desc`` method,
+  defining the ``OFPPC_NO_FWD`` flag on interfaces that Kytos
+  should not send packets to.
 
 
 [1.5] - 2020-07-23
