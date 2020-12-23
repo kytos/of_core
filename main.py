@@ -217,8 +217,6 @@ class Main(KytosNApp):
         for packet in packets:
             if not connection.is_alive():
                 return
-            log.debug('Connection %s: New Raw Openflow packet - %s',
-                      connection.id, packet.hex())
 
             if connection.is_new():
                 try:
