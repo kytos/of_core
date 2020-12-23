@@ -2,10 +2,10 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from kytos.lib.helpers import get_switch_mock, get_connection_mock
-from napps.kytos.of_core.utils import (of_slicer, _emit_message, _unpack_int,
-                                       emit_message_in, emit_message_out)
-from napps.kytos.of_core.utils import GenericHello
+from kytos.lib.helpers import get_connection_mock, get_switch_mock
+from napps.kytos.of_core.utils import (GenericHello, _emit_message,
+                                       _unpack_int, emit_message_in,
+                                       emit_message_out, of_slicer)
 from tests.helpers import get_controller_mock
 
 

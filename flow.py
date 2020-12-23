@@ -209,6 +209,14 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
                    actions=non_none_actions,
                    stats=FlowStats.from_of_flow_stats(of_flow_stats))
 
+    def __eq__(self, other):
+        include_id = False
+        if not isinstance(other, self.__class__):
+            raise ValueError(f'Error comparing flows: {other} is not '
+                             f'an instance of {self.__class__}')
+
+        return self.as_dict(include_id) == other.as_dict(include_id)
+
 
 class ActionBase(ABC):
     """Base class for a flow action."""

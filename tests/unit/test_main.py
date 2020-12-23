@@ -1,14 +1,14 @@
 """Test Main methods."""
 from unittest import TestCase
-from unittest.mock import MagicMock, create_autospec, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, create_autospec, patch
 
 from pyof.foundation.network_types import Ethernet
 from pyof.v0x01.controller2switch.common import StatsType
 from pyof.v0x04.controller2switch.common import MultipartType
 
 from kytos.core.connection import ConnectionState
-from kytos.lib.helpers import (get_switch_mock, get_kytos_event_mock,
-                               get_connection_mock)
+from kytos.lib.helpers import (get_connection_mock, get_kytos_event_mock,
+                               get_switch_mock)
 from napps.kytos.of_core.utils import NegotiationException
 from tests.helpers import get_controller_mock
 
@@ -29,7 +29,7 @@ class TestMain(TestCase):
             0x04, get_switch_mock("00:00:00:00:00:00:00:04"))
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
-        # pylint: disable=bad-option-value
+        # pylint: disable=import-outside-toplevel
         from napps.kytos.of_core.main import Main
         self.addCleanup(patch.stopall)
         self.napp = Main(get_controller_mock())

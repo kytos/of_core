@@ -2,6 +2,7 @@
 from unittest.mock import MagicMock, Mock
 
 from pyof.utils import unpack
+
 from kytos.core import Controller
 from kytos.core.config import KytosConfig
 from kytos.core.connection import Connection, ConnectionState

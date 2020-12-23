@@ -15,7 +15,6 @@ from pyof.v0x04.symmetric.echo_request import EchoRequest
 from kytos.core.connection import ConnectionState
 from kytos.core.events import KytosEvent
 from napps.kytos.of_core.utils import GenericHello
-
 from tests.helpers import (get_connection_mock, get_controller_mock,
                            get_interface_mock, get_switch_mock)
 
@@ -30,7 +29,7 @@ class TestMain(TestCase):
         self.server_name_url = 'http://localhost:8181/api/kytos/of_core'
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
-        # pylint: disable=bad-option-value
+        # pylint: disable=import-outside-toplevel
         from napps.kytos.of_core.main import Main
         self.addCleanup(patch.stopall)
 

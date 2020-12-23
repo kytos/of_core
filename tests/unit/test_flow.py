@@ -2,8 +2,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-
-from kytos.lib.helpers import get_switch_mock, get_connection_mock
+from kytos.lib.helpers import get_connection_mock, get_switch_mock
 from napps.kytos.of_core.v0x01.flow import Flow as Flow01
 from napps.kytos.of_core.v0x04.flow import Flow as Flow04
 
@@ -23,7 +22,7 @@ class TestFlowFactory(TestCase):
             0x04, get_switch_mock("00:00:00:00:00:00:00:04"))
 
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
-        # pylint: disable=bad-option-value
+        # pylint: disable=import-outside-toplevel
         from napps.kytos.of_core.flow import FlowFactory
         self.addCleanup(patch.stopall)
 
@@ -98,3 +97,98 @@ class TestFlow(TestCase):
                                  self.expected['idle_timeout'])
                 self.assertEqual(response.hard_timeout,
                                  self.expected['hard_timeout'])
+
+
+class TestFlowBase(TestCase):
+    """Test FlowBase Class."""
+
+    def test__eq__success_with_equal_flows(self):
+        """Test success case to __eq__ override with equal flows."""
+        mock_switch = get_switch_mock("00:00:00:00:00:00:00:01")
+
+        flow_dict = {'switch': mock_switch.id,
+                     'table_id': 1,
+                     'match': {
+                         'dl_src': '11:22:33:44:55:66'
+                     },
+                     'priority': 2,
+                     'idle_timeout': 3,
+                     'hard_timeout': 4,
+                     'cookie': 5,
+                     'actions': [
+                         {'action_type': 'set_vlan',
+                          'vlan_id': 6}],
+                     'stats': {}
+                     }
+
+        for flow_class in Flow01, Flow04:
+            with self.subTest(flow_class=flow_class):
+                flow_1 = flow_class.from_dict(flow_dict, mock_switch)
+                flow_2 = flow_class.from_dict(flow_dict, mock_switch)
+                self.assertEqual(flow_1 == flow_2, True)
+
+    def test__eq__success_with_different_flows(self):
+        """Test success case to __eq__ override with different flows."""
+        mock_switch = get_switch_mock("00:00:00:00:00:00:00:01")
+
+        flow_dict_1 = {'switch': mock_switch.id,
+                       'table_id': 1,
+                       'match': {
+                           'dl_src': '11:22:33:44:55:66'
+                       },
+                       'priority': 2,
+                       'idle_timeout': 3,
+                       'hard_timeout': 4,
+                       'cookie': 5,
+                       'actions': [
+                           {'action_type': 'set_vlan',
+                            'vlan_id': 6}],
+                       'stats': {}
+                       }
+
+        flow_dict_2 = {'switch': mock_switch.id,
+                       'table_id': 1,
+                       'match': {
+                           'dl_src': '11:22:33:44:55:66'
+                       },
+                       'priority': 1000,
+                       'idle_timeout': 3,
+                       'hard_timeout': 4,
+                       'cookie': 5,
+                       'actions': [
+                           {'action_type': 'set_vlan',
+                            'vlan_id': 6}],
+                       'stats': {}
+                       }
+
+        for flow_class in Flow01, Flow04:
+            with self.subTest(flow_class=flow_class):
+                flow_1 = flow_class.from_dict(flow_dict_1, mock_switch)
+                flow_2 = flow_class.from_dict(flow_dict_2, mock_switch)
+                self.assertEqual(flow_1 == flow_2, False)
+
+    def test__eq__fail(self):
+        """Test the case where __eq__ receives objects with different types."""
+        mock_switch = get_switch_mock("00:00:00:00:00:00:00:01")
+
+        flow_dict = {'switch': mock_switch.id,
+                     'table_id': 1,
+                     'match': {
+                         'dl_src': '11:22:33:44:55:66'
+                     },
+                     'priority': 2,
+                     'idle_timeout': 3,
+                     'hard_timeout': 4,
+                     'cookie': 5,
+                     'actions': [
+                         {'action_type': 'set_vlan',
+                          'vlan_id': 6}],
+                     'stats': {}
+                     }
+
+        for flow_class in Flow01, Flow04:
+            with self.subTest(flow_class=flow_class):
+                flow_1 = flow_class.from_dict(flow_dict, mock_switch)
+                flow_2 = "any_string_object"
+                with self.assertRaises(ValueError):
+                    return flow_1 == flow_2
