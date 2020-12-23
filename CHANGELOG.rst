@@ -24,6 +24,26 @@ Fixed
 Security
 ========
 
+[1.5.1] - 2020-12-23
+********************
+
+Added
+=====
+- Added support for requesting port statistics.
+- Implemented ``FlowBase.__eq__`` to allow direct comparison
+  between two flows
+
+Changed
+=======
+- Changed ``setup.py`` to alert when a test fails on Travis.
+- Changed the behavior of the ``handle_port_desc`` method,
+  defining the ``OFPPC_NO_FWD`` flag on interfaces that Kytos
+  should not send packets to.
+
+Removed
+=======
+- Removed debug messages with raw OpenFlow packets
+
 
 [1.5] - 2020-07-23
 ******************
