@@ -3,7 +3,7 @@
   "username": "kytos",
   "name": "of_core",
   "description": "OpenFlow Core of Kytos Controller, responsible for main OpenFlow operations.",
-  "version": "1.5",
+  "version": "1.5.1",
   "napp_dependencies": [],
   "license": "MIT",
   "url": "https://github.com/kytos/of_core.git",
