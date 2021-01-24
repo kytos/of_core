@@ -50,7 +50,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
     _flow_mod_class = None
     _match_class = None
 
-    def __init__(self, switch, table_id=0xff, match=None, priority=0x8000,
+    def __init__(self, switch, table_id=0x0, match=None, priority=0x8000,
                  idle_timeout=0, hard_timeout=0, cookie=0, actions=None,
                  stats=None):
         """Assign parameters to attributes.
@@ -58,7 +58,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         Args:
             switch (kytos.core.switch.Switch): Switch ID is used to uniquely
                 identify a flow.
-            table_id (int): The index of a single table or 0xff for all tables.
+            table_id (int): The index of a single table.
             match (|match|): Match object.
             priority (int): Priority level of flow entry.
             idle_timeout (int): Idle time before discarding, in seconds.
