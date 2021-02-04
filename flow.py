@@ -58,7 +58,8 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         Args:
             switch (kytos.core.switch.Switch): Switch ID is used to uniquely
                 identify a flow.
-            table_id (int): The index of a single table.
+            table_id (int): The index of a single table or 0xff for all tables
+                            (0xff is valid only for the delete command)
             match (|match|): Match object.
             priority (int): Priority level of flow entry.
             idle_timeout (int): Idle time before discarding, in seconds.
