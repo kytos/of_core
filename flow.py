@@ -185,6 +185,7 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         flow_mod.idle_timeout = self.idle_timeout
         flow_mod.hard_timeout = self.hard_timeout
         flow_mod.priority = self.priority
+        flow_mod.table_id = self.table_id
         return flow_mod
 
     @staticmethod
