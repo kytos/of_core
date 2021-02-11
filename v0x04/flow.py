@@ -6,6 +6,7 @@ from pyof.v0x04.common.action import ActionOutput as OFActionOutput
 from pyof.v0x04.common.action import ActionPopVLAN as OFActionPopVLAN
 from pyof.v0x04.common.action import ActionPush as OFActionPush
 from pyof.v0x04.common.action import ActionSetField as OFActionSetField
+from pyof.v0x04.common.action import ActionSetQueue as OFActionSetQueue
 from pyof.v0x04.common.action import ActionType
 from pyof.v0x04.common.flow_instructions import (InstructionApplyAction,
                                                  InstructionType)
@@ -18,8 +19,8 @@ from napps.kytos.of_core.flow import (ActionBase, ActionFactoryBase, FlowBase,
                                       FlowStats, MatchBase, PortStats)
 from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 
-__all__ = ('ActionOutput', 'ActionSetVlan', 'Action', 'Flow', 'FlowStats',
-           'PortStats')
+__all__ = ('ActionOutput', 'ActionSetVlan', 'ActionSetQueue', 'ActionPushVlan',
+           'ActionPopVlan', 'Action', 'Flow', 'FlowStats', 'PortStats')
 
 
 class Match(MatchBase):
@@ -68,6 +69,28 @@ class ActionOutput(ActionBase):
     def as_of_action(self):
         """Return a pyof ActionOuput instance."""
         return OFActionOutput(port=self.port)
+
+
+class ActionSetQueue(ActionBase):
+    """Action to set a queue for the packet."""
+
+    def __init__(self, queue_id):
+        """Require the id of the queue.
+
+        Args:
+            queue_id (int): Queue ID.
+        """
+        self.queue_id = queue_id
+        self.action_type = 'set_queue'
+
+    @classmethod
+    def from_of_action(cls, of_action):
+        """Return a high-level ActionSetQueue instance from pyof class."""
+        return cls(queue_id=of_action.queue_id.value)
+
+    def as_of_action(self):
+        """Return a pyof ActionSetQueue instance."""
+        return OFActionSetQueue(queue_id=self.queue_id)
 
 
 class ActionPopVlan(ActionBase):
@@ -147,10 +170,12 @@ class Action(ActionFactoryBase):
         'set_vlan': ActionSetVlan,
         'push_vlan': ActionPushVlan,
         'pop_vlan': ActionPopVlan,
+        'set_queue': ActionSetQueue,
         OFActionOutput: ActionOutput,
         OFActionSetField: ActionSetVlan,
         OFActionPush: ActionPushVlan,
-        OFActionPopVLAN: ActionPopVlan
+        OFActionPopVLAN: ActionPopVlan,
+        OFActionSetQueue: ActionSetQueue
     }
 
 
