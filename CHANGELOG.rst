@@ -3,6 +3,7 @@ Changelog
 #########
 All notable changes to the of_core NApp will be documented in this file.
 
+
 [UNRELEASED] - Under development
 ********************************
 
@@ -23,6 +24,21 @@ Fixed
 
 Security
 ========
+
+
+[1.6.0] - 2021-03-31
+********************
+
+Added
+=====
+- Added the dpid of switch and the xid to log error message OFPT_ERROR.
+- Added class for action set queue of OF 1.3.
+
+Fixed
+=====
+- Update the default value `table_id` in the `FlowBase` class to fix an
+  error in the consistency check.
+
 
 [1.5.1] - 2020-12-23
 ********************
