@@ -175,6 +175,10 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
         """Return an OpenFlow delete FlowMod."""
         return self._as_of_flow_mod(FlowModCommand.OFPFC_DELETE)
 
+    def as_of_strict_delete_flow_mod(self):
+        """Return an OpenFlow strict delete FlowMod."""
+        return self._as_of_flow_mod(FlowModCommand.OFPFC_DELETE_STRICT)
+
     @abstractmethod
     def _as_of_flow_mod(self, command):
         """Return a pyof FlowMod with given ``command``."""
