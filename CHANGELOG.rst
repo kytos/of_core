@@ -24,6 +24,22 @@ Fixed
 Security
 ========
 
+[1.6] - 2021-04-16 
+******************
+
+Added
+=====
+ - Added class ActionSetQueue dealing with the set queue action of OF 1.3.
+
+Changed
+=======
+ - Improved log error message OFPT_ERROR adding dpid and xid info. 
+
+Fixed
+=====
+ - Fix the string formatting in OFPT_ERROR log message.
+
+
 [1.5.1] - 2020-12-23
 ********************
 
