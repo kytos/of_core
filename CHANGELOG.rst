@@ -24,6 +24,23 @@ Fixed
 Security
 ========
 
+[1.6.0] - 2021-04-22 
+******************
+
+Added
+=====
+- Added class ``ActionSetQueue`` for OpenFlow 1.3.
+
+Changed
+=======
+- Improved OFPT_ERROR log message adding ``dpid`` and ``xid`` info. 
+
+Fixed
+=====
+- Fixed the string formatting in OFPT_ERROR log message.
+- Updated the default ``table_id`` value in the ``FlowBase`` class to
+  fix an error in the consistency check.
+
 [1.5.1] - 2020-12-23
 ********************
 
