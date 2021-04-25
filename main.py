@@ -82,6 +82,10 @@ class Main(KytosNApp):
         if msg.body_type == StatsType.OFPST_FLOW:
             switch.flows = [Flow01.from_of_flow_stats(f, switch)
                             for f in msg.body]
+            event_raw = KytosEvent(
+                name='kytos/of_core.flow_stats.received',
+                content={'switch': switch})
+            self.controller.buffers.app.put(event_raw)
         elif msg.body_type == StatsType.OFPST_PORT:
             port_stats = [of_port_stats for of_port_stats in msg.body]
             port_stats_event = KytosEvent(
@@ -120,6 +124,16 @@ class Main(KytosNApp):
                 name='kytos/of_core.handshake.completed',
                 content={'switch': switch})
             self.controller.buffers.app.put(event_raw)
+
+    @listen_to('kytos/of_core.handshake.completed')
+    def on_handshake_completed_request_flow_list(self, event):
+        """Request an flow list right after the handshake is completed.
+
+        Args:
+            event (KytosEvent): Event with the switch' handshake completed
+        """
+        switch = event.content['switch']
+        self._request_flow_list(switch)
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
@@ -170,6 +184,10 @@ class Main(KytosNApp):
         switch.flows = self._multipart_replies_flows[switch.id]
         del self._multipart_replies_flows[switch.id]
         del self._multipart_replies_xids[switch.id]['flows']
+        event_raw = KytosEvent(
+            name='kytos/of_core.flow_stats.received',
+            content={'switch': switch})
+        self.controller.buffers.app.put(event_raw)
 
     def _new_port_stats(self, switch):
         """Send an event with the new port stats and clean resources."""
