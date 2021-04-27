@@ -167,6 +167,10 @@ class Main(KytosNApp):
             all_flows.extend(flows)
             if reply.flags.value % 2 == 0:  # Last bit means more replies
                 self._update_switch_flows(switch)
+                event_raw = KytosEvent(
+                    name='kytos/of_core.flow_stats.received',
+                    content={'switch': switch})
+                self.controller.buffers.app.put(event_raw)
 
     def _handle_multipart_port_stats(self, reply, switch):
         """Emit an event about new port stats."""
@@ -184,10 +188,6 @@ class Main(KytosNApp):
         switch.flows = self._multipart_replies_flows[switch.id]
         del self._multipart_replies_flows[switch.id]
         del self._multipart_replies_xids[switch.id]['flows']
-        event_raw = KytosEvent(
-            name='kytos/of_core.flow_stats.received',
-            content={'switch': switch})
-        self.controller.buffers.app.put(event_raw)
 
     def _new_port_stats(self, switch):
         """Send an event with the new port stats and clean resources."""
