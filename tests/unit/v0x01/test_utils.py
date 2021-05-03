@@ -1,5 +1,5 @@
 """Test v0x01.utils methods."""
-from unittest import TestCase
+from unittest import TestCase, mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from kytos.lib.helpers import get_connection_mock, get_switch_mock
@@ -61,3 +61,31 @@ class TestUtils(TestCase):
         """Test say_hello."""
         say_hello(self.mock_controller, self.mock_switch)
         mock_emit_message_out.assert_called()
+
+
+class TestJSONEncoderOF10(TestCase):
+    """Test custom JSON encoder for OF 1.0 ."""
+
+    def setUp(self):
+        """Execute steps before each tests.
+        Set the server_name_url from kytos/of_core
+        """
+        patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
+        # pylint: disable=import-outside-toplevel
+        from napps.kytos.of_core.v0x01.utils import JSONEncoderOF10
+        self.addCleanup(patch.stopall)
+
+        self.encoder = JSONEncoderOF10()
+
+    @patch('napps.kytos.of_core.v0x01.utils.UBIntBase', new=mock.Mock)
+    def test_cast(self):
+        """Test custom JSON encoder for OF 1.0 flow representation."""
+        object_mock = MagicMock()
+        response = self.encoder.default(object_mock)
+        self.assertEqual(response, 1)
+
+    @patch('json.JSONEncoder.default')
+    def test_cast_not_equal_case(self, mock_json):
+        """Test the custom JSON encoder in case the object is not UBInt."""
+        self.encoder.default('1')
+        mock_json.assert_called()

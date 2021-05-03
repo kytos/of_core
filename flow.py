@@ -165,6 +165,11 @@ class FlowBase(ABC):  # pylint: disable=too-many-instance-attributes
             string: Flow JSON string representation.
 
         """
+        version = self.switch.connection.protocol.version
+        if version == 0x01:
+            return json.dumps(self.as_dict(include_id),
+                              cls=v0x01.utils.JSONEncoderOF10,
+                              sort_keys=sort_keys)
         return json.dumps(self.as_dict(include_id), sort_keys=sort_keys)
 
     def as_of_add_flow_mod(self):
