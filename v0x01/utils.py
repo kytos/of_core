@@ -1,4 +1,7 @@
 """Utilities module for of_core OpenFlow v0x01 operations."""
+import json
+
+from pyof.foundation.base import UBIntBase
 from pyof.v0x01.controller2switch.common import (ConfigFlag, FlowStatsRequest,
                                                  PortStatsRequest)
 from pyof.v0x01.controller2switch.set_config import SetConfig
@@ -9,6 +12,19 @@ from pyof.v0x01.symmetric.hello import Hello
 from kytos.core import KytosEvent
 from kytos.core.interface import Interface
 from napps.kytos.of_core.utils import emit_message_out
+
+
+class JSONEncoderOF10(json.JSONEncoder):
+    """Custom JSON encoder for OF 1.0 flow representation.
+
+    Make casting from UBInt8, UBInt16, UBInt32, UBInt64 to int.
+    """
+
+    def default(self, obj):  # pylint: disable=E0202,W0221
+        """Make casting from UBInt8, UBInt16, UBInt32, UBInt64 to int."""
+        if isinstance(obj, UBIntBase):
+            return int(obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 def update_flow_list(controller, switch):

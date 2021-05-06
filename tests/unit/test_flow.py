@@ -14,8 +14,8 @@ class TestFlowFactory(TestCase):
         """Execute steps before each tests.
         Set the server_name_url from kytos/of_core
         """
-        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01")
-        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02")
+        self.switch_v0x01 = get_switch_mock("00:00:00:00:00:00:00:01", 0x01)
+        self.switch_v0x04 = get_switch_mock("00:00:00:00:00:00:00:02", 0x04)
         self.switch_v0x01.connection = get_connection_mock(
             0x01, get_switch_mock("00:00:00:00:00:00:00:03"))
         self.switch_v0x04.connection = get_connection_mock(
@@ -47,8 +47,7 @@ class TestFlow(TestCase):
 
     mock_switch = get_switch_mock("00:00:00:00:00:00:00:01")
     mock_switch.id = "00:00:00:00:00:00:00:01"
-    expected = {'id': 'ca11e386e4bb5b0301b775c4640573e7',
-                'switch': mock_switch.id,
+    expected = {'switch': mock_switch.id,
                 'table_id': 1,
                 'match': {
                     'dl_src': '11:22:33:44:55:66'
@@ -62,12 +61,21 @@ class TestFlow(TestCase):
                      'vlan_id': 6}],
                 'stats': {}}
 
-    def test_flow_mod(self):
+    @patch('napps.kytos.of_core.flow.v0x01')
+    @patch('napps.kytos.of_core.flow.v0x04')
+    @patch('napps.kytos.of_core.flow.json.dumps')
+    def test_flow_mod(self, *args):
         """Convert a dict to flow and vice-versa."""
-        for flow_class in Flow01, Flow04:
+        (mock_json, _, _) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        mock_json.return_value = str(self.expected)
+        for flow_class, version in [(Flow04, 0x01), (Flow04, 0x04)]:
             with self.subTest(flow_class=flow_class):
-                flow = flow_class.from_dict(self.expected, self.mock_switch)
+                mock_switch = get_switch_mock(dpid, version)
+                mock_switch.id = dpid
+                flow = flow_class.from_dict(self.expected, mock_switch)
                 actual = flow.as_dict()
+                del actual['id']
                 self.assertDictEqual(self.expected, actual)
 
     @patch('napps.kytos.of_core.flow.FlowBase._as_of_flow_mod')
