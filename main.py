@@ -133,7 +133,8 @@ class Main(KytosNApp):
             event (KytosEvent): Event with the switch' handshake completed
         """
         switch = event.content['switch']
-        self._request_flow_list(switch)
+        if switch.is_enabled():
+            self._request_flow_list(switch)
 
     @listen_to('kytos/of_core.v0x04.messages.in.ofpt_multipart_reply')
     def handle_multipart_reply(self, event):
