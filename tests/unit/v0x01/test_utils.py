@@ -80,8 +80,8 @@ class TestJSONEncoderOF10(TestCase):
     # This method tests the conversion of the `` UBIntBase`` class to int.
     # This patch and mock avoids the need to import the class`` UBIntBase``
     # into the test file to create an object of type `` UBIntBase``.
-    # Without the patch, ``object_mock`` not pass in the ``isinstance``
-    # check not covering the main path of the conversation method.
+    # Without the patch, ``object_mock``does not enter the ``isinstance``
+    # condition which is being tested here.
     @patch('napps.kytos.of_core.v0x01.utils.UBIntBase', new=mock.Mock)
     def test_cast(self):
         """Test custom JSON encoder for OF 1.0 flow representation."""
