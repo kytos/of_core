@@ -50,14 +50,14 @@ class TestUtils(TestCase):
         handle_port_desc(self.mock_controller, self.mock_switch, [mock_port])
         self.assertEqual(self.mock_switch.update_interface.call_count, 1)
         mock_event_buffer.assert_called()
-        self.assertEqual(self.mock_controller.buffers.app.put.call_count, 1)
+        self.assertEqual(self.mock_controller.buffers.app.put.call_count, 2)
 
         self.mock_switch.update_interface.call_count = 0
         self.mock_controller.buffers.app.put.call_count = 0
         handle_port_desc(self.mock_controller, self.mock_switch, [mock_port])
         self.assertEqual(self.mock_switch.update_interface.call_count, 1)
         mock_event_buffer.assert_called()
-        self.assertEqual(self.mock_controller.buffers.app.put.call_count, 1)
+        self.assertEqual(self.mock_controller.buffers.app.put.call_count, 2)
 
     @patch('napps.kytos.of_core.v0x04.utils.emit_message_out')
     def test_send_echo(self, mock_emit_message_out):
