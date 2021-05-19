@@ -125,8 +125,8 @@ def handle_port_desc(controller, switch, port_list):
                                   speed=port.curr_speed.value,
                                   config=config)
         switch.update_interface(interface)
-        interface_event = KytosEvent(name='kytos/of_core.switch'
-                                     '.interface.created',
+        event_name = 'kytos/of_core.switch.interface.created'
+        interface_event = KytosEvent(name=event_name,
                                      content={'interface': interface})
         port_event = KytosEvent(name='kytos/of_core.switch.port.created',
                                 content={
