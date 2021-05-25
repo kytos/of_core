@@ -64,6 +64,24 @@ class TestMain(TestCase):
         mock_update_flow_list_v0x04.assert_called_with(self.napp.controller,
                                                        self.switch_v0x04)
 
+    @patch('napps.kytos.of_core.v0x04.utils.update_flow_list')
+    @patch('napps.kytos.of_core.v0x01.utils.update_flow_list')
+    def test_on_handshake_completed_request_flow_list(self, *args):
+        """Test request flow list."""
+        (mock_update_flow_list_v0x01, mock_update_flow_list_v0x04) = args
+        mock_update_flow_list_v0x04.return_value = "ABC"
+        name = 'kytos/of_core.handshake.completed'
+        content = {"switch": self.switch_v0x01}
+        event = get_kytos_event_mock(name=name, content=content)
+        self.napp.on_handshake_completed_request_flow_list(event)
+        mock_update_flow_list_v0x01.assert_called_with(self.napp.controller,
+                                                       self.switch_v0x01)
+        content = {"switch": self.switch_v0x04}
+        event = get_kytos_event_mock(name=name, content=content)
+        self.napp.on_handshake_completed_request_flow_list(event)
+        mock_update_flow_list_v0x04.assert_called_with(self.napp.controller,
+                                                       self.switch_v0x04)
+
     @patch('napps.kytos.of_core.v0x01.flow.Flow.from_of_flow_stats')
     def test_handle_stats_reply(self, mock_from_of_flow_stats_v0x01):
         """Test handle stats reply."""
