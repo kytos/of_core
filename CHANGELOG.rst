@@ -24,6 +24,7 @@ Fixed
 Security
 ========
 
+
 [1.6.1] - 2021-05-26
 ********************
 
@@ -33,12 +34,9 @@ Added
   statistics are available.
 - Added a custom JSON encoder for OF 1.0 flow representation, solving the
   JSON UBInt serialization error.
-- Added new event ``switch.interface.created`` in ``handle_por_desc`` to
+- Added new event ``switch.interface.created`` in ``handle_port_desc`` to
   notify when a new interface is created.
 
-Fix
-===
-- Update the tox requirements to avoid warning in Travis CI.
 
 [1.6.0] - 2021-04-22
 ********************
