@@ -24,8 +24,22 @@ Fixed
 Security
 ========
 
-[1.6.0] - 2021-04-22 
-******************
+
+[1.6.1] - 2021-05-26
+********************
+
+Added
+=====
+- New event ``kytos/of_core.flow_stats.received`` to notify when new flow
+  statistics are available.
+- Added a custom JSON encoder for OF 1.0 flow representation, solving the
+  JSON UBInt serialization error.
+- Added new event ``switch.interface.created`` in ``handle_port_desc`` to
+  notify when a new interface is created.
+
+
+[1.6.0] - 2021-04-22
+********************
 
 Added
 =====
@@ -33,7 +47,7 @@ Added
 
 Changed
 =======
-- Improved OFPT_ERROR log message adding ``dpid`` and ``xid`` info. 
+- Improved OFPT_ERROR log message adding ``dpid`` and ``xid`` info.
 
 Fixed
 =====
